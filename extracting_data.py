@@ -47,6 +47,7 @@ df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
 df.to_csv('data_cleaned.csv', sep=';', index=False)
 print(df.head())
 
+#Plot of the difference between theoretical and experimental binding energies
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df['N'], df['Z'], c=df['Diff_bind_ene'], cmap='jet', edgecolor='None', s=25)
 cbar = plt.colorbar(scatter)
@@ -56,7 +57,7 @@ plt.grid()
 plt.savefig('bind_teoexp_dif.png')
 plt.show()
 
-#3D plot
+#3D plot of the difference between theoretical and experimental binding energies
 fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(111, projection='3d')  
 scatter = ax.scatter(df['Z'], df['N'], df['Diff_bind_ene'], c=df['Diff_bind_ene'], cmap='jet', edgecolor='None', s=25)
@@ -66,6 +67,14 @@ cbar = plt.colorbar(scatter, ax=ax)
 plt.savefig('bind_teoexp_dif_3D.png') 
 plt.show()
 
-
+#Plot of the theoretical binding energy as a function of Z and N
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(df['N'], df['Z'], c=df['bind_ene_teo'], cmap='jet', edgecolor='None', s=25)
+cbar = plt.colorbar(scatter)
+plt.xlabel('N')
+plt.ylabel('Z') 
+plt.grid()
+plt.savefig('bind_teo.png')
+plt.show()
 
 
