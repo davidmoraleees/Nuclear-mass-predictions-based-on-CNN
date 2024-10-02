@@ -3,8 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+#Extracting data from AME2020 file
 df = pd.read_fwf(
-    'mass_1.mas20.txt',
+    'AME2020.txt',
     usecols=(1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 21, 22),
     names=['N-Z', 'N', 'Z', 'A', 'Element', 'mass_exc',
            'mass_exc_unc', 'bind_ene', 'bind_ene_unc', 'beta_ene',
@@ -44,7 +45,7 @@ bind_ene_teo = (av*A-aS*A**(2/3)-ac*Z**2*A**(-1/3)-aA*(A-2*Z)**2/A-ap*delta*A**(
 df['bind_ene_teo'] = bind_ene_teo
 df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
 
-df.to_csv('data_cleaned.csv', sep=';', index=False)
+df.to_csv('AME2020_cleaned.csv', sep=';', index=False)
 print(df.head())
 
 #Plot of the difference between theoretical and experimental binding energies
@@ -76,5 +77,19 @@ plt.ylabel('Z')
 plt.grid()
 plt.savefig('bind_teo.png')
 plt.show()
+
+#Extracting data from WS4 file
+with open('WS4.txt', 'r') as file:
+    for i in range(29):
+        if i == 27:  
+            header = file.readline().strip().split() #Header
+        else:
+            next(file) #Data
+    data = [line.strip() for line in file]
+
+data_rows = [line.split() for line in data]
+df = pd.DataFrame(data_rows, columns=header)  
+df.to_csv('WS4_cleaned.csv', index=False, header=True, sep=';')
+print(df.head())
 
 
