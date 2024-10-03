@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.colors import TwoSlopeNorm
 
 
 # Extracting data from WS4 file
@@ -80,35 +81,50 @@ print("AME2016 dataset: \n", df2016.head(), "\n")
 
 
 #Plots of AME2020 dataset:
-#Plot of the difference between theoretical and experimental binding energies
+#Plot of the theoretical binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
-scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['Diff_bind_ene'], cmap='jet', edgecolor='None', s=25)
+scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene_teo'], cmap='jet', edgecolor='None',
+                      s=25, vmin=df2020['bind_ene_teo'].min(), vmax=df2020['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 plt.xlabel('N')
 plt.ylabel('Z') 
 plt.grid()
-plt.savefig('bind_teoexp_dif.png')
+plt.savefig('Binding energy plots/bind_teo.png')
+plt.show()
+
+#Plot of the experimental binding energy as a function of Z and N
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene'], cmap='jet', edgecolor='None',
+                      s=25, vmin=df2020['bind_ene_teo'].min(), vmax=df2020['bind_ene_teo'].max())
+cbar = plt.colorbar(scatter)
+plt.xlabel('N')
+plt.ylabel('Z') 
+plt.grid()
+plt.savefig('Binding energy plots/bind_exp.png')
+plt.show()
+
+#Plot of the difference between theoretical and experimental binding energies
+plt.figure(figsize=(10, 6))
+norm = TwoSlopeNorm(vmin=df2020['Diff_bind_ene'].min(), vcenter=0, vmax=df2020['Diff_bind_ene'].max())
+scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['Diff_bind_ene'],
+                      cmap='seismic', norm=norm, edgecolor='None', s=25)
+cbar = plt.colorbar(scatter)
+plt.xlabel('N')
+plt.ylabel('Z') 
+plt.grid()
+plt.savefig('Binding energy plots/bind_teoexp_dif.png')
 plt.show()
 
 #3D plot of the difference between theoretical and experimental binding energies
 fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(111, projection='3d')  
-scatter = ax.scatter(df2020['Z'], df2020['N'], df2020['Diff_bind_ene'], c=df2020['Diff_bind_ene'], cmap='jet', edgecolor='None', s=25)
+norm = TwoSlopeNorm(vmin=df2020['Diff_bind_ene'].min(), vcenter=0, vmax=df2020['Diff_bind_ene'].max())
+scatter = ax.scatter(df2020['Z'], df2020['N'], df2020['Diff_bind_ene'], c=df2020['Diff_bind_ene'],
+                     cmap='seismic', norm=norm, edgecolor='None', s=25)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
 cbar = plt.colorbar(scatter, ax=ax)
-plt.savefig('bind_teoexp_dif_3D.png') 
+plt.savefig('Binding energy plots/bind_teoexp_dif_3D.png') 
 plt.show()
-
-#Plot of the theoretical binding energy as a function of Z and N
-plt.figure(figsize=(10, 6))
-scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene_teo'], cmap='jet', edgecolor='None', s=25)
-cbar = plt.colorbar(scatter)
-plt.xlabel('N')
-plt.ylabel('Z') 
-plt.grid()
-plt.savefig('bind_teo.png')
-plt.show()
-
 
 
