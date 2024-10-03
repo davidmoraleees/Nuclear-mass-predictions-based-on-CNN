@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 # Extracting data from WS4 file
-with open('WS4.txt', 'r') as file:
+with open('Dataset files/WS4.txt', 'r') as file:
     for i in range(29):
         if i == 27:  
             header = file.readline().strip().split() 
@@ -15,7 +15,7 @@ with open('WS4.txt', 'r') as file:
 
 data_rows = [line.split() for line in data]
 dfWS4= pd.DataFrame(data_rows, columns=header)  
-dfWS4.to_csv('WS4_cleaned.csv', index=False, header=True, sep=';')
+dfWS4.to_csv('Dataset files/WS4_cleaned.csv', index=False, header=True, sep=';')
 print("WS4 dataset: \n", dfWS4.head(), "\n")
 
 
@@ -56,7 +56,7 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['bind_ene_teo'] = bind_ene_teo
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
 
-    df.to_csv(f'AME{year}_cleaned.csv', sep=';', index=False)
+    df.to_csv(f'Dataset files/AME{year}_cleaned.csv', sep=';', index=False)
     return df
 
 columns_2020 = (1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 21, 22)
@@ -72,10 +72,10 @@ column_names_2016 = ['index', 'N-Z', 'N', 'Z', 'A', 'empty', 'Element', 'empty2'
                      'empty6', 'A2', 'empty7', 'atomic_mass', 'atomic_mass_unc']
 header_2016 = 31
 
-df2020 = process_file('AME2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020)
+df2020 = process_file('Dataset files/AME2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020)
 print("AME2020 dataset: \n", df2020.head(), "\n")
 
-df2016 = process_file('AME2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016)
+df2016 = process_file('Dataset files/AME2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016)
 print("AME2016 dataset: \n", df2016.head(), "\n")
 
 
