@@ -119,7 +119,7 @@ magic_numbers = [8, 20, 28, 50, 82, 126]
 for magic in magic_numbers:
     plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
     plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
-    plt.text(magic + 1.5, 1, str(magic), color='black', fontsize=10, ha='center', va='bottom')
+    plt.text(magic + 0.5, 2, str(magic), color='black', fontsize=10, ha='center', va='bottom')
     plt.text(0, magic - 0.5, str(magic), color='black', fontsize=10, ha='left', va='center')
 plt.xlabel('N')
 plt.ylabel('Z') 
@@ -135,7 +135,7 @@ scatter = ax.scatter(df2020['Z'], df2020['N'], df2020['Diff_bind_ene'], c=df2020
                      cmap='seismic', norm=norm, edgecolor='None', s=25)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
-plt.title('3D difference exp-teo binding energy AME2020 ')
+plt.title('3D Difference exp-teo binding energy AME2020 ')
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('(MeV)')
 plt.savefig('Binding energy plots/bind_teoexp_dif_3D.png') 
@@ -149,7 +149,7 @@ def calculate_shell_gaps(df, element, axis): #Neutrons--> element=n, axis=Z; Pro
     df[f'delta_2{element}'] = df[f'bind_ene_{element}-2'] - 2 * df['bind_ene_total'] + df[f'bind_ene_{element}+2']
     return df
 
-def plot_shell_gaps(df, gap_col, title, filename, vmin, vmax, xlim=None, ylim=None): #gap_col=delta_2n or delta_2p
+def plot_shell_gaps(df, gap_col, title, filename, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plt.figure(figsize=(10, 6))
     scatter = plt.scatter(df['N'], df['Z'], c=df[gap_col]*(-1), cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
     cbar = plt.colorbar(scatter)
@@ -162,11 +162,8 @@ def plot_shell_gaps(df, gap_col, title, filename, vmin, vmax, xlim=None, ylim=No
         plt.text(magic + 0.5, 0, str(magic), color='black', fontsize=10, ha='center', va='bottom')
         plt.text(0, magic - 0.5, str(magic), color='black', fontsize=10, ha='left', va='center')
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
-
+    plt.xlim(xlim)
+    plt.ylim(ylim)
     plt.xlabel('N')
     plt.ylabel('Z')
     plt.title(title)

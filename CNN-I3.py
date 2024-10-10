@@ -10,7 +10,7 @@ csv_file = 'data/mass2016_cleaned.csv'
 data = pd.read_csv(csv_file, delimiter=';')
 
 def create_5x5_neighborhood(data, idx):
-    current_n = data.iloc[idx]['N'] #Extracting data for the specified 'idx' row and 'N' column of the dataframe.
+    current_n = data.iloc[idx]['N'] #Data for the target nucleus. 'idx'=row and 'N'=column
     current_z = data.iloc[idx]['Z']
     
     z_grid = np.zeros((5, 5))
@@ -18,12 +18,12 @@ def create_5x5_neighborhood(data, idx):
     bind_ene_grid = np.zeros((5, 5))
     bind_ene_mean = data['bind_ene'].mean()
     
-    for i in range(-2, 3): #The neighbourhood is defined from -2 to 2, 0 being the central value.
+    for i in range(-2, 3): #The neighbourhood is defined from -2 to 2, 0 being the central value
         for j in range(-2, 3):
-            neighbor_n = current_n + i #Neighbours of the target nucleus.
+            neighbor_n = current_n + i #Data of the neighbours of the target nucleus.
             neighbor_z = current_z + j
-            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index #indexes of all the neighbours
-                                                                                             #that have 'neighbor_n' and 'neighbor_z' 
+            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index #row index of the neighbour
+                                                                                             #that has 'neighbor_n' and 'neighbor_z' 
             z_grid[i+2, j+2] = neighbor_z #We add +2 because matrices start at [0,0] (top left corner)
             n_grid[i+2, j+2] = neighbor_n  
 
@@ -35,7 +35,7 @@ def create_5x5_neighborhood(data, idx):
     bind_ene_grid[2, 2] = 0 #Target nucleus assigned to zero
     return z_grid, n_grid, bind_ene_grid
 
-inputs = [] #5x5x3 matrices of inputs
+inputs = [] #3x5x5 matrices of inputs
 targets = [] #Binding energies of the target nucleus
 
 for idx in range(len(data)):
