@@ -41,8 +41,6 @@ def process_file(filename, header, widths, columns, column_names, year):
                    np.where((df['Z'] % 2 == 1) & (df['N'] % 2 == 1), 1, np.nan)))  # Z and N odds
     df['delta'] = df['delta'].astype(int)
 
-    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case
-
     # Theoretical model
     av = 15.8  # MeV
     aS = 18.3
@@ -56,7 +54,10 @@ def process_file(filename, header, widths, columns, column_names, year):
 
     bind_ene_teo = (av*A-aS*A**(2/3)-ac*Z**2*A**(-1/3)-aA*(A-2*Z)**2/A-ap*delta*A**(-1/2))/A  # MeV
     df['bind_ene_teo'] = bind_ene_teo
+    df['bind_ene_teo_total'] = df['bind_ene_teo']*df['A']
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
+
+    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case
 
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
@@ -80,6 +81,11 @@ print("AME2020 dataset: \n", df2020.head(), "\n")
 df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016)
 print("AME2016 dataset: \n", df2016.head(), "\n")
 
+rmse_2016 = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
+print('RMSE liquid droplet model (2016): ', rmse_2016)
+rmse_2020 = np.sqrt(np.mean(df2020['Diff_bind_ene'] ** 2))
+print('RMSE liquid droplet model (2020): ', rmse_2020)
+
 
 #Plots of AME2020 dataset:
 #Plot of the theoretical binding energy as a function of Z and N
@@ -88,10 +94,15 @@ scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene_teo'], cmap='
                       s=25, vmin=df2020['bind_ene_teo'].min(), vmax=df2020['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
+magic_numbers = [8, 20, 28, 50, 82, 126]
+for magic in magic_numbers:
+    plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+plt.xticks(magic_numbers)
+plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
 plt.title('Theoretical binding energy AME2020')
-plt.grid()
 plt.savefig('Binding energy plots/bind_teo.png')
 plt.show()
 
@@ -101,10 +112,15 @@ scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene'], cmap='jet'
                       s=25, vmin=df2020['bind_ene_teo'].min(), vmax=df2020['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
+magic_numbers = [8, 20, 28, 50, 82, 126]
+for magic in magic_numbers:
+    plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+plt.xticks(magic_numbers)
+plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
 plt.title('Experimental binding energy AME2020')
-plt.grid()
 plt.savefig('Binding energy plots/bind_exp.png')
 plt.show()
 
@@ -119,8 +135,8 @@ magic_numbers = [8, 20, 28, 50, 82, 126]
 for magic in magic_numbers:
     plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
     plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
-    plt.text(magic + 0.5, 2, str(magic), color='black', fontsize=10, ha='center', va='bottom')
-    plt.text(0, magic - 0.5, str(magic), color='black', fontsize=10, ha='left', va='center')
+plt.xticks(magic_numbers)
+plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
 plt.title('Difference exp-teo binding energy AME2020 ')
@@ -143,15 +159,18 @@ plt.show()
 
 
 #Experimental nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
-def calculate_shell_gaps(df, element, axis): #Neutrons--> element=n, axis=Z; Protons--> element=p, axis=N
-    df[f'bind_ene_{element}+2'] = df.groupby(axis)['bind_ene_total'].shift(-2)
-    df[f'bind_ene_{element}-2'] = df.groupby(axis)['bind_ene_total'].shift(2)
-    df[f'delta_2{element}'] = df[f'bind_ene_{element}-2'] - 2 * df['bind_ene_total'] + df[f'bind_ene_{element}+2']
+def calculate_shell_gaps(df, element, axis, type, column):
+    #Neutrons--> element = n, axis = Z; Protons--> element = p, axis = N
+    #type = exp or teo; column = 'bind_ene_total' or 'bind_ene_teo_total'
+    df[f'bind_ene_{element}+2_{type}'] = df.groupby(axis)[column].shift(-2)
+    df[f'bind_ene_{element}-2_{type}'] = df.groupby(axis)[column].shift(2)
+    df[f'delta_2{element}_{type}'] = df[f'bind_ene_{element}-2_{type}'] - 2 * df[column] + df[f'bind_ene_{element}+2_{type}']
     return df
 
-def plot_shell_gaps(df, gap_col, title, filename, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
+def plot_shell_gaps(df, gap_col, type, title, filename, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
+    plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
-    scatter = plt.scatter(df['N'], df['Z'], c=df[gap_col]*(-1), cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name]*(-1), cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')
 
@@ -159,27 +178,45 @@ def plot_shell_gaps(df, gap_col, title, filename, vmin, vmax, xlim, ylim): #gap_
     for magic in magic_numbers:
         plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
         plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
-        plt.text(magic + 0.5, 0, str(magic), color='black', fontsize=10, ha='center', va='bottom')
-        plt.text(0, magic - 0.5, str(magic), color='black', fontsize=10, ha='left', va='center')
 
+    plt.xticks(magic_numbers)
+    plt.yticks(magic_numbers)
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.xlabel('N')
     plt.ylabel('Z')
-    plt.title(title)
+    plt.title("{} {}".format(title, type))
     plt.savefig(filename)
     plt.show()
 
-df2020 = calculate_shell_gaps(df2020, 'n', 'Z') 
-df2020 = calculate_shell_gaps(df2020, 'p', 'N') 
+df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'exp', 'bind_ene_total') 
+df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'exp', 'bind_ene_total') 
 
-min_value = min(df2020['delta_2n'].min(), df2020['delta_2p'].min()) * (-1) #Same colorbar range for both plots
-max_value = max(df2020['delta_2n'].max(), df2020['delta_2p'].max()) * (-1)
+min_value = min(df2020['delta_2n_exp'].min(), df2020['delta_2p_exp'].min()) * (-1) #Same colorbar range for both plots
+max_value = max(df2020['delta_2n_exp'].max(), df2020['delta_2p_exp'].max()) * (-1)
 xlim = (min(df2020['N'].min(), 0), max(df2020['N'].max() + 10, 0)) #Same limits for both plots
 ylim = (0, df2020['Z'].max() + 10)  
 
-plot_shell_gaps(df2020, 'delta_2n', 'Neutron shell gaps', 'Binding energy plots/neutron_shell_gaps.png',
+plot_shell_gaps(df2020, 'delta_2n', 'exp', 'Neutron shell gaps', 'Binding energy plots/neutron_shell_gaps_exp.png',
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2020, 'delta_2p', 'Proton shell gaps', 'Binding energy plots/proton_shell_gaps.png',
+plot_shell_gaps(df2020, 'delta_2p', 'exp', 'Proton shell gaps', 'Binding energy plots/proton_shell_gaps_exp.png',
                 min_value, max_value, xlim=xlim, ylim=ylim)
+
+
+df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'teo', 'bind_ene_teo_total') 
+df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'teo', 'bind_ene_teo_total') 
+
+min_value = min(df2020['delta_2n_teo'].min(), df2020['delta_2p_teo'].min()) * (-1) #Same colorbar range for both plots
+max_value = max(df2020['delta_2n_teo'].max(), df2020['delta_2p_teo'].max()) * (-1)
+xlim = (min(df2020['N'].min(), 0), max(df2020['N'].max() + 10, 0)) #Same limits for both plots
+ylim = (0, df2020['Z'].max() + 10)  
+
+plot_shell_gaps(df2020, 'delta_2n', 'teo', 'Neutron shell gaps', 'Binding energy plots/neutron_shell_gaps_teo.png',
+                min_value, max_value, xlim=xlim, ylim=ylim)
+plot_shell_gaps(df2020, 'delta_2p', 'teo', 'Proton shell gaps', 'Binding energy plots/proton_shell_gaps_teo.png',
+                min_value, max_value, xlim=xlim, ylim=ylim)
+
+
+
+
 
