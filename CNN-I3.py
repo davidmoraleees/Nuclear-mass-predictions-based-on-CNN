@@ -83,10 +83,12 @@ optimizer = optim.Adam(model.parameters(), lr=0.001) #model.parameters()=weights
 #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
 #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
 
+print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
+
 train_loss_rmse_values = []
 test_loss_rmse_values = []
 
-num_epochs = 10 
+num_epochs = 1000 
 for epoch in range(num_epochs):
     model.train()
     optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
@@ -106,19 +108,19 @@ for epoch in range(num_epochs):
         test_loss_rmse_values.append(test_loss_rmse.item())
     print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss (RMSE): {test_loss_rmse.item()}')
     
-torch.save(model.state_dict(), 'cnn_i3_model.pt')
+torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
 
 plt.figure(figsize=(10, 5))
-plt.plot(range(1, num_epochs + 1), train_loss_rmse_values, label='Training RMSE', marker='o', color='blue')
-plt.plot(range(1, num_epochs + 1), test_loss_rmse_values, label='Test RMSE', marker='o', color='red')
-plt.title('Evolució de RMSE en funció de les èpoques')
+plt.plot(range(1, num_epochs + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
+plt.plot(range(1, num_epochs + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
+plt.title(f'Evolution of RMSE over {num_epochs} epochs')
 plt.xlabel('Època')
 plt.ylabel('RMSE (MeV)')
 max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
 plt.ylim(0, max_value) 
 plt.legend()
 plt.grid()
-plt.savefig('CNN plots/CNN-I3_evolution.png')
+plt.savefig(f'CNN plots/CNN-I3_evolution_{num_epochs}_epochs.png')
 plt.show()
 
 
