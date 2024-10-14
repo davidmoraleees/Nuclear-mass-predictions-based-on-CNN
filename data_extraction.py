@@ -32,7 +32,8 @@ def process_file(filename, header, widths, columns, column_names, year):
     )
     df = df.replace({'#': ''}, regex=True) 
     df['Z'] = df['Z'].astype(int) 
-    df['A'] = df['A'].astype(int) 
+    df['A'] = df['A'].astype(int)
+    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
     df['bind_ene'] = df['bind_ene'].astype(float)/1000
     df['bind_ene_total'] = df['bind_ene']*df['A']
 
@@ -57,8 +58,6 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['bind_ene_teo_total'] = df['bind_ene_teo']*df['A']
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
 
-    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case
-
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
 
@@ -82,9 +81,7 @@ df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_201
 print("AME2016 dataset: \n", df2016.head(), "\n")
 
 rmse_2016 = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
-print('RMSE liquid droplet model (2016): ', rmse_2016)
-rmse_2020 = np.sqrt(np.mean(df2020['Diff_bind_ene'] ** 2))
-print('RMSE liquid droplet model (2020): ', rmse_2020)
+print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016)
 
 
 #Plots of AME2020 dataset:

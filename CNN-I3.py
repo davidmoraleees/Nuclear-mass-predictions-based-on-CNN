@@ -87,6 +87,9 @@ print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() 
 
 train_loss_rmse_values = []
 test_loss_rmse_values = []
+best_test_rmse = float('inf')
+best_model_state = None
+best_epoch = 0
 
 num_epochs = 1000 
 for epoch in range(num_epochs):
@@ -107,8 +110,18 @@ for epoch in range(num_epochs):
         test_loss_rmse = torch.sqrt(test_loss_mse)
         test_loss_rmse_values.append(test_loss_rmse.item())
     print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss (RMSE): {test_loss_rmse.item()}')
-    
-torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+
+    if test_loss_rmse.item() < best_test_rmse:
+        best_test_rmse = test_loss_rmse.item()
+        best_model_state = model.state_dict()
+        best_epoch = epoch + 1
+
+if best_model_state is not None:
+    torch.save(best_model_state, f'cnn_i3_best_model.pt')
+    print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
+else:
+    torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+
 
 plt.figure(figsize=(10, 5))
 plt.plot(range(1, num_epochs + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
