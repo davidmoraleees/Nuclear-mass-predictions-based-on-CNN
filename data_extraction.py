@@ -1,7 +1,7 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import TwoSlopeNorm
 
 
@@ -85,6 +85,10 @@ print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016
 
 
 #Plots of AME2020 dataset:
+binding_plots_folder = 'Binding energy plots'
+if not os.path.exists(binding_plots_folder):
+    os.makedirs(binding_plots_folder)
+
 #Plot of the theoretical binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['bind_ene_teo'], cmap='jet', edgecolor='None',
@@ -99,8 +103,8 @@ plt.xticks(magic_numbers)
 plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
-plt.title('Theoretical binding energy AME2020')
-plt.savefig('Binding energy plots/bind_teo.png')
+plt.title('Theoretical binding energy per nucleon AME2020')
+plt.savefig(os.path.join(binding_plots_folder, 'bind_teo_per_nucleon.png'))
 plt.show()
 
 #Plot of the experimental binding energy as a function of Z and N
@@ -117,8 +121,8 @@ plt.xticks(magic_numbers)
 plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
-plt.title('Experimental binding energy AME2020')
-plt.savefig('Binding energy plots/bind_exp.png')
+plt.title('Experimental binding energy per nucleon AME2020')
+plt.savefig(os.path.join(binding_plots_folder, 'bind_exp_per_nucleon.png'))
 plt.show()
 
 #Plot of the difference between theoretical and experimental binding energies
@@ -136,8 +140,8 @@ plt.xticks(magic_numbers)
 plt.yticks(magic_numbers)
 plt.xlabel('N')
 plt.ylabel('Z') 
-plt.title('Difference exp-teo binding energy AME2020 ')
-plt.savefig('Binding energy plots/bind_teoexp_dif.png')
+plt.title('Difference exp-teo binding energy per nucleon AME2020')
+plt.savefig(os.path.join(binding_plots_folder, 'bind_teoexp_dif_per_nucleon.png'))
 plt.show()
 
 #3D plot of the difference between theoretical and experimental binding energies
@@ -148,26 +152,27 @@ scatter = ax.scatter(df2020['Z'], df2020['N'], df2020['Diff_bind_ene'], c=df2020
                      cmap='seismic', norm=norm, edgecolor='None', s=25)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
-plt.title('3D Difference exp-teo binding energy AME2020 ')
+plt.title('3D Difference exp-teo binding energy per nucleon AME2020 ')
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('(MeV)')
-plt.savefig('Binding energy plots/bind_teoexp_dif_3D.png') 
+plt.savefig(os.path.join(binding_plots_folder, 'bind_teoexp_dif_3D_per_nucleon.png'))
 plt.show()
 
 
-#Experimental nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
-def calculate_shell_gaps(df, element, axis, type, column):
+#Nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
+def calculate_shell_gaps(df, element, axis, type, column, year):
     #Neutrons--> element = n, axis = Z; Protons--> element = p, axis = N
     #type = exp or teo; column = 'bind_ene_total' or 'bind_ene_teo_total'
     df[f'bind_ene_{element}+2_{type}'] = df.groupby(axis)[column].shift(-2)
     df[f'bind_ene_{element}-2_{type}'] = df.groupby(axis)[column].shift(2)
     df[f'delta_2{element}_{type}'] = df[f'bind_ene_{element}-2_{type}'] - 2 * df[column] + df[f'bind_ene_{element}+2_{type}']
+    df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
 
-def plot_shell_gaps(df, gap_col, type, title, filename, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
+def plot_shell_gaps(df, gap_col, type, title, filename, binding_plots_folder, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
-    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name]*(-1), cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')
 
@@ -183,37 +188,29 @@ def plot_shell_gaps(df, gap_col, type, title, filename, vmin, vmax, xlim, ylim):
     plt.xlabel('N')
     plt.ylabel('Z')
     plt.title("{} {}".format(title, type))
-    plt.savefig(filename)
+    plt.savefig(os.path.join(binding_plots_folder, filename))
     plt.show()
 
-df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'exp', 'bind_ene_total') 
-df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'exp', 'bind_ene_total') 
+df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'exp', 'bind_ene_total', 2020) 
+df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'exp', 'bind_ene_total', 2020) 
+df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'teo', 'bind_ene_teo_total', 2020) 
+df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'teo', 'bind_ene_teo_total', 2020) 
 
-min_value = min(df2020['delta_2n_exp'].min(), df2020['delta_2p_exp'].min()) * (-1) #Same colorbar range for both plots
-max_value = max(df2020['delta_2n_exp'].max(), df2020['delta_2p_exp'].max()) * (-1)
+min_value = min(df2020['delta_2n_exp'].min(), df2020['delta_2p_exp'].min(),
+                df2020['delta_2n_teo'].min(), df2020['delta_2p_teo'].min()) #Same colorbar range for both plots
+max_value = max(df2020['delta_2n_exp'].max(), df2020['delta_2p_exp'].max(),
+                df2020['delta_2n_teo'].max(), df2020['delta_2p_teo'].max())
+
 xlim = (min(df2020['N'].min(), 0), max(df2020['N'].max() + 10, 0)) #Same limits for both plots
 ylim = (0, df2020['Z'].max() + 10)  
 
-plot_shell_gaps(df2020, 'delta_2n', 'exp', 'Neutron shell gaps', 'Binding energy plots/neutron_shell_gaps_exp.png',
+plot_shell_gaps(df2020, 'delta_2n', 'exp', 'Neutron shell gaps', 'neutron_shell_gaps_exp.png', binding_plots_folder,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2020, 'delta_2p', 'exp', 'Proton shell gaps', 'Binding energy plots/proton_shell_gaps_exp.png',
+plot_shell_gaps(df2020, 'delta_2p', 'exp', 'Proton shell gaps', 'proton_shell_gaps_exp.png', binding_plots_folder,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-
-
-df2020 = calculate_shell_gaps(df2020, 'n', 'Z', 'teo', 'bind_ene_teo_total') 
-df2020 = calculate_shell_gaps(df2020, 'p', 'N', 'teo', 'bind_ene_teo_total') 
-
-min_value = min(df2020['delta_2n_teo'].min(), df2020['delta_2p_teo'].min()) * (-1) #Same colorbar range for both plots
-max_value = max(df2020['delta_2n_teo'].max(), df2020['delta_2p_teo'].max()) * (-1)
-xlim = (min(df2020['N'].min(), 0), max(df2020['N'].max() + 10, 0)) #Same limits for both plots
-ylim = (0, df2020['Z'].max() + 10)  
-
-plot_shell_gaps(df2020, 'delta_2n', 'teo', 'Neutron shell gaps', 'Binding energy plots/neutron_shell_gaps_teo.png',
+plot_shell_gaps(df2020, 'delta_2n', 'teo', 'Neutron shell gaps', 'neutron_shell_gaps_teo.png', binding_plots_folder,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2020, 'delta_2p', 'teo', 'Proton shell gaps', 'Binding energy plots/proton_shell_gaps_teo.png',
+plot_shell_gaps(df2020, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_gaps_teo.png', binding_plots_folder,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-
-
-
 
 
