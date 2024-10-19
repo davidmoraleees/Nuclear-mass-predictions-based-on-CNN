@@ -51,12 +51,22 @@ def process_file(filename, header, widths, columns, column_names, year):
 
     A = df['A']
     Z = df['Z']
+    N = df['N']
     delta = df['delta']
 
     bind_ene_teo = (av*A-aS*A**(2/3)-ac*Z**2*A**(-1/3)-aA*(A-2*Z)**2/A-ap*delta*A**(-1/2))/A  # MeV
+
     df['bind_ene_teo'] = bind_ene_teo
     df['bind_ene_teo_total'] = df['bind_ene_teo']*df['A']
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
+    df['Diff_bind_ene_total'] = df['bind_ene_total'] - df['bind_ene_teo_total']
+
+    m_n = 939.565378 # MeV/c^2
+    m_p = 938.27208816 # MeV/c^2
+    
+    df['M_exp'] = Z*m_p + N*m_n - df['bind_ene_total']
+    df['M_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
+    df['Diff_masses'] = df['M_exp'] - df['M_teo']
 
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
@@ -214,3 +224,25 @@ plot_shell_gaps(df2020, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_ga
                 min_value, max_value, xlim=xlim, ylim=ylim)
 
 
+# Nuclear masses
+rmse_2016 = np.sqrt(np.mean(df2016['Diff_masses'] ** 2))
+print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016)
+
+#Plot of the difference between theoretical and experimental nuclear masses
+plt.figure(figsize=(10, 6))
+norm = TwoSlopeNorm(vmin=df2020['Diff_masses'].min(), vcenter=0, vmax=df2020['Diff_masses'].max())
+scatter = plt.scatter(df2020['N'], df2020['Z'], c=df2020['Diff_masses'],
+                      cmap='seismic', norm=norm, edgecolor='None', s=25)
+cbar = plt.colorbar(scatter)
+cbar.set_label('(MeV)')
+magic_numbers = [8, 20, 28, 50, 82, 126]
+for magic in magic_numbers:
+    plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+plt.xticks(magic_numbers)
+plt.yticks(magic_numbers)
+plt.xlabel('N')
+plt.ylabel('Z') 
+plt.title('Difference exp-teo in masses AME2020')
+plt.savefig(os.path.join(binding_plots_folder, 'masses_teoexp_dif.png'))
+plt.show()

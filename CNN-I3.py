@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import TwoSlopeNorm
 from sklearn.model_selection import train_test_split
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -59,7 +60,7 @@ for idx in range(len(data)):
 inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 3, 5, 5) where 'n' is the number of nucleus
 targets_tensor = torch.tensor(np.array(targets), dtype=torch.float32).view(-1, 1).to(device) #shape: (n, 1)
 
-train_inputs, test_inputs, train_targets, test_targets = train_test_split(inputs_tensor, targets_tensor, test_size=0.3, random_state=42)
+train_inputs, test_inputs, train_targets, test_targets = train_test_split(inputs_tensor, targets_tensor, test_size=0.3, shuffle=True)
 
 
 class CNN_I3(nn.Module):
@@ -84,6 +85,8 @@ optimizer = optim.Adam(model.parameters(), lr=0.001) #model.parameters()=weights
 #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
 
 print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
+#p.numel() counts the number of elements that has every tensor. 
+#We only count those which are used for training (requires_grad=True).
 
 train_loss_rmse_values = []
 test_loss_rmse_values = []
@@ -91,7 +94,7 @@ best_test_rmse = float('inf')
 best_model_state = None
 best_epoch = 0
 
-num_epochs = 1000 
+num_epochs = 1000
 for epoch in range(num_epochs):
     model.train()
     optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
@@ -121,6 +124,7 @@ if best_model_state is not None:
     print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
 else:
     torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+    print('Best model not found. Saving last model')
 
 
 plt.figure(figsize=(10, 5))
@@ -136,4 +140,41 @@ plt.grid()
 plt.savefig(f'CNN plots/CNN-I3_evolution_{num_epochs}_epochs.png')
 plt.show()
 
+
+if best_model_state is not None:
+    model.load_state_dict(best_model_state)
+    print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
+else:
+    model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
+    print('Best model not found. Loading last model')
+
+model.eval()
+with torch.no_grad():
+    all_outputs = model(inputs_tensor.to(device)).cpu().numpy() 
+    all_targets = targets_tensor.cpu().numpy()
+
+diff = all_targets - all_outputs
+scatter_data = pd.DataFrame({
+    'N': data['N'],
+    'Z': data['Z'],
+    'diff': diff.flatten()
+})
+
+plt.figure(figsize=(10, 6))
+norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
+scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
+                      cmap='seismic', norm=norm, edgecolor='None', s=25)
+cbar = plt.colorbar(scatter)
+cbar.set_label('(MeV)')
+magic_numbers = [8, 20, 28, 50, 82, 126]
+for magic in magic_numbers:
+    plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5) 
+    plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5) 
+plt.xticks(magic_numbers) 
+plt.yticks(magic_numbers) 
+plt.xlabel('N') 
+plt.ylabel('Z') 
+plt.title('Difference exp-predicted')
+plt.savefig('CNN plots/CNN-I3_diff_scatter.png')
+plt.show()
 
