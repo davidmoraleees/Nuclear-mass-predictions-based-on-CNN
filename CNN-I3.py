@@ -60,7 +60,9 @@ for idx in range(len(data)):
 inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 3, 5, 5) where 'n' is the number of nucleus
 targets_tensor = torch.tensor(np.array(targets), dtype=torch.float32).view(-1, 1).to(device) #shape: (n, 1)
 
-train_inputs, test_inputs, train_targets, test_targets = train_test_split(inputs_tensor, targets_tensor, test_size=0.3, shuffle=True)
+indices = np.arange(len(data)) #Original indices in the Dataframe
+train_inputs, test_inputs, train_targets, test_targets, train_indices, test_indices = train_test_split(
+    inputs_tensor,targets_tensor, indices, test_size=0.3, shuffle=True, random_state=42)
 
 
 class CNN_I3(nn.Module):
@@ -78,9 +80,10 @@ class CNN_I3(nn.Module):
         x = self.fc(x)
         return x
 
+
 model = CNN_I3().to(device) #Instance of our model
 criterion = nn.MSELoss() #Instance of the MSE
-optimizer = optim.Adam(model.parameters(), lr=0.001) #model.parameters()=weights and biases to optimize
+optimizer = optim.Adamax(model.parameters(), lr=0.002) #model.parameters()=weights and biases to optimize
 #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
 #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
 
@@ -137,7 +140,7 @@ max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
 plt.ylim(0, max_value) 
 plt.legend()
 plt.grid()
-plt.savefig(f'CNN plots/CNN-I3_evolution_{num_epochs}_epochs.png')
+plt.savefig(f'CNN plots/CNN-I3_evolution.png')
 plt.show()
 
 
@@ -148,33 +151,45 @@ else:
     model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
     print('Best model not found. Loading last model')
 
-model.eval()
-with torch.no_grad():
-    all_outputs = model(inputs_tensor.to(device)).cpu().numpy() 
-    all_targets = targets_tensor.cpu().numpy()
 
-diff = all_targets - all_outputs
-scatter_data = pd.DataFrame({
-    'N': data['N'],
-    'Z': data['Z'],
-    'diff': diff.flatten()
-})
+def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name):
+    model.eval() 
+    with torch.no_grad():
+        outputs = model(inputs.to(device)).cpu().numpy()
+        targets_np = targets.cpu().numpy()
+        diff = targets_np - outputs
 
-plt.figure(figsize=(10, 6))
-norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
-scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
-                      cmap='seismic', norm=norm, edgecolor='None', s=25)
-cbar = plt.colorbar(scatter)
-cbar.set_label('(MeV)')
-magic_numbers = [8, 20, 28, 50, 82, 126]
-for magic in magic_numbers:
-    plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5) 
-    plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5) 
-plt.xticks(magic_numbers) 
-plt.yticks(magic_numbers) 
-plt.xlabel('N') 
-plt.ylabel('Z') 
-plt.title('Difference exp-predicted')
-plt.savefig('CNN plots/CNN-I3_diff_scatter.png')
-plt.show()
+    scatter_data = pd.DataFrame({
+        'N': data.iloc[indices]['N'].values,
+        'Z': data.iloc[indices]['Z'].values,
+        'diff': diff.flatten()
+    })
+
+    plt.figure(figsize=(10, 6))
+    norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
+    scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
+                          cmap='seismic', norm=norm, edgecolor='None', s=10)
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('(MeV)')
+    magic_numbers = [8, 20, 28, 50, 82, 126]
+    for magic in magic_numbers:
+        plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+        plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.xticks(magic_numbers)
+    plt.yticks(magic_numbers)
+    plt.xlabel('N')
+    plt.ylabel('Z')
+    plt.title(title)
+    plt.savefig(file_name)
+    plt.show()
+
+
+calculate_and_plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
+                               'Difference exp-predicted (all data)', 'CNN plots/CNN-I3_diff_scatter.png')
+
+calculate_and_plot_differences(data, train_inputs, train_targets, train_indices, model, device,
+                               'Difference exp-predicted (training set)', 'CNN plots/CNN-I3_diff_scatter_train.png')
+
+calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
+                               'Difference exp-predicted (test set)', 'CNN plots/CNN-I3_diff_scatter_test.png')
 
