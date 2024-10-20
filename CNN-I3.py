@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Training on:', device)
@@ -97,7 +98,7 @@ best_test_rmse = float('inf')
 best_model_state = None
 best_epoch = 0
 
-num_epochs = 1000
+num_epochs = 10
 for epoch in range(num_epochs):
     model.train()
     optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
@@ -193,3 +194,60 @@ calculate_and_plot_differences(data, train_inputs, train_targets, train_indices,
 calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
                                'Difference exp-predicted (test set)', 'CNN plots/CNN-I3_diff_scatter_test.png')
 
+
+n_splits = 5  
+kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+rmse_train_list = []
+rmse_test_list = []
+
+for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
+    print(f"Fold {fold + 1}/{n_splits}")
+
+    train_inputs, test_inputs = inputs_tensor[train_idx], inputs_tensor[test_idx]
+    train_targets, test_targets = targets_tensor[train_idx], targets_tensor[test_idx]
+    model = CNN_I3().to(device)
+    optimizer = optim.Adamax(model.parameters(), lr=0.002)
+    best_test_rmse = float('inf')
+    best_model_state = None
+    best_epoch = 0
+    train_loss_rmse_values = []
+    test_loss_rmse_values = []
+
+    num_epochs = 100
+    for epoch in range(num_epochs):
+        model.train()
+        optimizer.zero_grad() 
+        train_outputs = model(train_inputs.to(device))
+        train_loss = criterion(train_outputs, train_targets)
+        train_loss.backward() 
+        optimizer.step() 
+        train_loss_rmse = torch.sqrt(train_loss)
+        train_loss_rmse_values.append(train_loss_rmse.item())
+        print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {train_loss_rmse.item()}')
+
+        model.eval()
+        with torch.no_grad(): 
+            test_outputs = model(test_inputs.to(device))
+            test_loss_mse = criterion(test_outputs, test_targets)
+            test_loss_rmse = torch.sqrt(test_loss_mse)
+            test_loss_rmse_values.append(test_loss_rmse.item())
+        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss (RMSE): {test_loss_rmse.item()}')
+
+        if test_loss_rmse.item() < best_test_rmse:
+            best_test_rmse = test_loss_rmse.item()
+            best_model_state = model.state_dict()
+            best_epoch = epoch + 1
+
+    rmse_train_list.append(train_loss_rmse_values[-1])  
+    rmse_test_list.append(test_loss_rmse_values[-1])  
+
+    print(f"Fold {fold + 1}: Best RMSE (Test): {best_test_rmse:.4f}MeV in epoch {best_epoch}")
+
+mean_rmse_train = np.mean(rmse_train_list)
+std_rmse_train = np.std(rmse_train_list)
+mean_rmse_test = np.mean(rmse_test_list)
+std_rmse_test = np.std(rmse_test_list)
+
+print(f"Final Average Train RMSE: {mean_rmse_train:.4f} ± {std_rmse_train:.4f} MeV")
+print(f"Final Average Test RMSE: {mean_rmse_test:.4f} ± {std_rmse_test:.4f} MeV")
