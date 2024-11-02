@@ -15,27 +15,30 @@ csv_file = 'data/mass2016_cleaned.csv'
 data = pd.read_csv(csv_file, delimiter=';')
 
 def create_5x5_neighborhood(data, idx):
-    current_n = data.iloc[idx]['N'] #Data for the target nucleus. 'idx'=row and 'N'=column
+    current_n = data.iloc[idx]['N']
     current_z = data.iloc[idx]['Z']
     
     z_grid = np.zeros((5, 5))
     n_grid = np.zeros((5, 5))
+    delta_I4_grid = np.zeros((5, 5)) 
     bind_ene_grid = np.zeros((5, 5))
     
     bind_ene_values = []
     
-    for i in range(-2, 3): #The neighbourhood is defined from -2 to 2, 0 being the central value
+    for i in range(-2, 3):
         for j in range(-2, 3):
-            neighbor_n = current_n + i #Data of the neighbours of the target nucleus.
+            neighbor_n = current_n + i
             neighbor_z = current_z + j
-            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index #row index of the neighbour
-                                                                                             #that has 'neighbor_n' and 'neighbor_z' 
-            z_grid[i+2, j+2] = neighbor_z #We add +2 because matrices start at [0,0] (top left corner)
+            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index
+            
+            z_grid[i+2, j+2] = neighbor_z
             n_grid[i+2, j+2] = neighbor_n  
 
-            if len(neighbor_idx) > 0: #Verify if any index has been found
+            if len(neighbor_idx) > 0:
                 bind_ene_value = data.iloc[neighbor_idx[0]]['bind_ene']
+                delta_I4_value = data.iloc[neighbor_idx[0]]['delta_I4'] 
                 bind_ene_grid[i + 2, j + 2] = bind_ene_value
+                delta_I4_grid[i + 2, j + 2] = delta_I4_value  
                 bind_ene_values.append(bind_ene_value)
             else:
                 bind_ene_grid[i + 2, j + 2] = np.nan 
@@ -46,20 +49,21 @@ def create_5x5_neighborhood(data, idx):
         neighborhood_mean = 0
 
     bind_ene_grid[np.isnan(bind_ene_grid)] = neighborhood_mean
-    bind_ene_grid[2, 2] = 0 #Target nucleus assigned to zero
-    return z_grid, n_grid, bind_ene_grid
+    bind_ene_grid[2, 2] = 0
 
-inputs = [] #3x5x5 matrices of inputs
+    return z_grid, n_grid, delta_I4_grid, bind_ene_grid 
+
+inputs = [] #4x5x5 matrices of inputs
 targets = [] #Binding energies of the target nucleus
 
 for idx in range(len(data)):
-    z_grid, n_grid, bind_ene_grid = create_5x5_neighborhood(data, idx)
-    input_grid = np.stack([z_grid, n_grid, bind_ene_grid], axis=0)
+    z_grid, n_grid, delta_I4_grid, bind_ene_grid = create_5x5_neighborhood(data, idx)
+    input_grid = np.stack([z_grid, n_grid, delta_I4_grid, bind_ene_grid], axis=0)  
     inputs.append(input_grid)
     target_value = data.iloc[idx]['bind_ene']
     targets.append(target_value)
 
-inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 3, 5, 5) where 'n' is the number of nucleus
+inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 4, 5, 5) where 'n' is the number of nucleus
 targets_tensor = torch.tensor(np.array(targets), dtype=torch.float32).view(-1, 1).to(device) #shape: (n, 1)
 
 indices = np.arange(len(data)) #Original indices in the Dataframe
@@ -67,10 +71,10 @@ train_inputs, test_inputs, train_targets, test_targets, train_indices, test_indi
     inputs_tensor,targets_tensor, indices, test_size=0.3, shuffle=True, random_state=42)
 
 
-class CNN_I3(nn.Module):
+class CNN_I4(nn.Module):
     def __init__(self):
-        super(CNN_I3, self).__init__() #We initialize the nn.Module class
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1) #Basic features
+        super(CNN_I4, self).__init__() #We initialize the nn.Module class
+        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=1, padding=1) #Basic features
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1) #More complex features
         self.fc = nn.Linear(32 * 5 * 5, 1) #Number of input features=32*5*5=800. Output features=1.
         self.relu = nn.ReLU()
@@ -83,7 +87,7 @@ class CNN_I3(nn.Module):
         return x
 
 
-model = CNN_I3().to(device) #Instance of our model
+model = CNN_I4().to(device) #Instance of our model
 criterion = nn.MSELoss() #Instance of the MSE
 optimizer = optim.Adamax(model.parameters(), lr=0.002) #model.parameters()=weights and biases to optimize
 #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
@@ -125,10 +129,10 @@ for epoch in range(num_epochs):
         best_epoch = epoch + 1
 
 if best_model_state is not None:
-    torch.save(best_model_state, f'cnn_i3_best_model.pt')
+    torch.save(best_model_state, f'cnn_i4_best_model.pt')
     print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
 else:
-    torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+    torch.save(model.state_dict(), f'cnn_i4_model_{num_epochs}_epochs.pt')
     print('Best model not found. Saving last model')
 
 
@@ -142,7 +146,7 @@ max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
 plt.ylim(0, max_value) 
 plt.legend()
 plt.grid()
-plt.savefig(f'CNN-I3 plots/CNN-I3_evolution.png')
+plt.savefig(f'CNN-I4 plots/CNN-I4_evolution.png')
 plt.show()
 
 
@@ -150,7 +154,7 @@ if best_model_state is not None:
     model.load_state_dict(best_model_state)
     print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
 else:
-    model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
+    model.load_state_dict(torch.load(f'cnn_i4_model_{num_epochs}_epochs.pt'))
     print('Best model not found. Loading last model')
 
 
@@ -187,13 +191,13 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
 
 
 calculate_and_plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                               'Difference exp-predicted (all data)', 'CNN-I3 plots/CNN-I3_diff_scatter.png')
+                               'Difference exp-predicted (all data)', 'CNN-I4 plots/CNN-I4_diff_scatter.png')
 
 calculate_and_plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                               'Difference exp-predicted (training set)', 'CNN-I3 plots/CNN-I3_diff_scatter_train.png')
+                               'Difference exp-predicted (training set)', 'CNN-I4 plots/CNN-I4_diff_scatter_train.png')
 
 calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                               'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png')
+                               'Difference exp-predicted (test set)', 'CNN-I4 plots/CNN-I4_diff_scatter_test.png')
 
 
 n_splits = 5  
@@ -207,7 +211,7 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
 
     train_inputs, test_inputs = inputs_tensor[train_idx], inputs_tensor[test_idx]
     train_targets, test_targets = targets_tensor[train_idx], targets_tensor[test_idx]
-    model = CNN_I3().to(device)
+    model = CNN_I4().to(device)
     optimizer = optim.Adamax(model.parameters(), lr=0.002)
     best_test_rmse = float('inf')
     best_model_state = None

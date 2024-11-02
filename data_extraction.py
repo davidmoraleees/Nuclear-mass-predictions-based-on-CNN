@@ -33,7 +33,6 @@ def process_file(filename, header, widths, columns, column_names, year):
     df = df.replace({'#': ''}, regex=True) 
     df['Z'] = df['Z'].astype(int) 
     df['A'] = df['A'].astype(int)
-    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
     df['bind_ene'] = df['bind_ene'].astype(float)/1000
     df['bind_ene_total'] = df['bind_ene']*df['A']
 
@@ -41,6 +40,8 @@ def process_file(filename, header, widths, columns, column_names, year):
                    np.where(df['A'] % 2 == 1, 0,  # A odd
                    np.where((df['Z'] % 2 == 1) & (df['N'] % 2 == 1), 1, np.nan)))  # Z and N odds
     df['delta'] = df['delta'].astype(int)
+    df['delta_I4'] = ((-1)**df['N']+(-1)**df['Z'])/2
+    df['delta_I4'] = df['delta_I4'].astype(int)
 
     # Theoretical model
     av = 15.8  # MeV
@@ -64,10 +65,21 @@ def process_file(filename, header, widths, columns, column_names, year):
     m_n = 939.565378 # MeV/c^2
     m_p = 938.27208816 # MeV/c^2
     
-    df['M_exp'] = Z*m_p + N*m_n - df['bind_ene_total']
-    df['M_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
-    df['Diff_masses'] = df['M_exp'] - df['M_teo']
+    #df['M_exp'] = Z*m_p + N*m_n - df['bind_ene_total']
+    #df['M_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
+    
+    uma = 931.4936 # MeV
+    m_e = 0.510998928 # MeV/c^2
+    df['atomic_mass'] = pd.to_numeric(df['atomic_mass'], errors='coerce')
+    df['atomic_mass'] = df['atomic_mass'].astype(float)
 
+    df['atomic_mass'] = df['atomic_mass']/(10**6) #u
+
+    df['M_exp'] = df['atomic_mass']*uma - Z*m_e + df['bind_ene_total']
+    df['M_teo'] = df['atomic_mass']*uma - Z*m_e + df['bind_ene_teo_total']
+    
+    df['Diff_masses'] = df['M_exp'] - df['M_teo']
+    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
 
@@ -225,7 +237,7 @@ plot_shell_gaps(df2020, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_ga
 
 
 # Nuclear masses
-rmse_2016 = np.sqrt(np.mean(df2016['Diff_masses'] ** 2))
+rmse_2016 = np.sqrt(np.nanmean(df2016['Diff_masses'] ** 2))
 print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016)
 
 #Plot of the difference between theoretical and experimental nuclear masses
