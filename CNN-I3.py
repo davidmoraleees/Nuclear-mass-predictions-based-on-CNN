@@ -117,7 +117,7 @@ for epoch in range(num_epochs):
         test_loss_mse = criterion(test_outputs, test_targets)
         test_loss_rmse = torch.sqrt(test_loss_mse)
         test_loss_rmse_values.append(test_loss_rmse.item())
-    print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss (RMSE): {test_loss_rmse.item()}')
+    print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
 
     if test_loss_rmse.item() < best_test_rmse:
         best_test_rmse = test_loss_rmse.item()
@@ -154,7 +154,7 @@ else:
     print('Best model not found. Loading last model')
 
 
-def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name, color_limits=None):
+def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name):
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy()
@@ -169,14 +169,17 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
 
     plt.figure(figsize=(10, 6))
 
-    if color_limits is not None:
-        vmin, vmax = color_limits
-        norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    if 'color_limits' not in color_limits_storage:
+        vmin = scatter_data['diff'].min()
+        vmax = scatter_data['diff'].max()
+        color_limits_storage['color_limits'] = (vmin, vmax)
     else:
-        norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
+        vmin, vmax = color_limits_storage['color_limits']
+
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
     
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
-                          cmap='seismic', norm=norm, edgecolor='None', s=10)
+                          cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')
     magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -191,15 +194,15 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
     plt.savefig(file_name)
     plt.show()
 
-
+color_limits_storage = {}
 calculate_and_plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                               'Difference exp-predicted (all data)', 'CNN-I3 plots/CNN-I3_diff_scatter.png', color_limits=(-0.4, 0.4))
+                               'Difference exp-predicted (all data)', 'CNN-I3 plots/CNN-I3_diff_scatter.png')
 
 calculate_and_plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                               'Difference exp-predicted (training set)', 'CNN-I3 plots/CNN-I3_diff_scatter_train.png', color_limits=(-0.4, 0.4))
+                               'Difference exp-predicted (training set)', 'CNN-I3 plots/CNN-I3_diff_scatter_train.png')
 
 calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                               'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png', color_limits=(-0.4, 0.4))
+                               'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png')
 
 
 n_splits = 5  
@@ -239,7 +242,7 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
             test_loss_mse = criterion(test_outputs, test_targets)
             test_loss_rmse = torch.sqrt(test_loss_mse)
             test_loss_rmse_values.append(test_loss_rmse.item())
-        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss (RMSE): {test_loss_rmse.item()}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
 
         if test_loss_rmse.item() < best_test_rmse:
             best_test_rmse = test_loss_rmse.item()

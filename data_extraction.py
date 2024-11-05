@@ -34,14 +34,10 @@ def process_file(filename, header, widths, columns, column_names, year):
     df = df.replace({'#': ''}, regex=True) 
     df['Z'] = df['Z'].astype(int) 
     df['A'] = df['A'].astype(int)
-    df['bind_ene'] = df['bind_ene'].astype(float)/1000 # MeV
-    df['bind_ene_total'] = df['bind_ene']*df['A']
-
     df['delta'] = np.where((df['Z'] % 2 == 0) & (df['N'] % 2 == 0), -1,  # Z and N even
                    np.where(df['A'] % 2 == 1, 0,  # A odd
                    np.where((df['Z'] % 2 == 1) & (df['N'] % 2 == 1), 1, np.nan)))  # Z and N odds
     df['delta'] = df['delta'].astype(int)
-
     df['delta_I4'] = ((-1)**df['N']+(-1)**df['Z'])/2
     df['delta_I4'] = df['delta_I4'].astype(int)
 
@@ -57,31 +53,39 @@ def process_file(filename, header, widths, columns, column_names, year):
     N = df['N']
     delta = df['delta']
 
-    bind_ene_teo = (av*A-aS*A**(2/3)-ac*Z**2*A**(-1/3)-aA*(A-2*Z)**2/A-ap*delta*A**(-1/2))/A  # MeV
-
-    df['bind_ene_teo'] = bind_ene_teo
+    df['bind_ene'] = df['bind_ene'].astype(float)/1000 # Everything is in MeV
+    df['bind_ene_total'] = df['bind_ene']*df['A'] 
+    df['bind_ene_teo'] = (av*A-aS*A**(2/3)-ac*Z**2*A**(-1/3)-aA*(A-2*Z)**2/A-ap*delta*A**(-1/2))/A  
     df['bind_ene_teo_total'] = df['bind_ene_teo']*df['A']
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
     df['Diff_bind_ene_total'] = df['bind_ene_total'] - df['bind_ene_teo_total']
  
-    uma = 931.4936 # MeV
-    m_e = 0.510998928 # MeV/c^2
+    uma = 931.4936 
+    m_e = 0.510998928 
+    m_p = 938.27208816
+    m_n = 939.565378
 
     if year == 2016:
         df['A2'] = df['A2'].astype(str)
         df['atomic_mass'] = df['atomic_mass'].astype(str)
-        df['real_atomic_mass'] = df['A2'] + df['atomic_mass']
+        df['atomic_mass'] = df['A2'] + df['atomic_mass']
     else:
-        df['real_atomic_mass'] = df['atomic_mass']
+        df['atomic_mass'] = df['atomic_mass'] #TO DO: fix AME2020
         
-    df['real_atomic_mass'] = pd.to_numeric(df['real_atomic_mass'], errors='coerce')
-    df['real_atomic_mass'] = df['real_atomic_mass'].astype(float)
-    df['real_atomic_mass'] = df['real_atomic_mass']/(10**6) #u
-
-    df['M_exp'] = df['real_atomic_mass']*uma - Z*m_e + df['bind_ene_total']
-    df['M_teo'] = df['real_atomic_mass']*uma - Z*m_e + df['bind_ene_teo_total']
+    df['atomic_mass'] = pd.to_numeric(df['atomic_mass'], errors='coerce')
+    df['atomic_mass'] = df['atomic_mass'].astype(float)
+    df['atomic_mass'] = df['atomic_mass']/(10**6)*uma # MeV
+    df['atomic_mass_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
     
-    df['Diff_masses'] = df['M_exp'] - df['M_teo']
+    df['atomic_mass_2'] = Z*m_p + N*m_n - df['bind_ene_total']   
+
+    df['B_e'] = (14.4381*(Z**2.39) + 1.55468*(10**-6)*(Z**5.35))*(10**-6)
+
+    df['M_N_teo'] = df['atomic_mass_teo'] - Z*m_e + df['B_e']
+
+    df['M_N_exp'] = df['atomic_mass_2'] - Z*m_e + df['B_e']
+    
+    df['Diff_masses'] = df['M_N_exp'] - df['M_N_teo']
     df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
@@ -117,7 +121,7 @@ if not os.path.exists(binding_plots_folder):
 #Plot of the theoretical binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['bind_ene_teo'], cmap='jet', edgecolor='None',
-                      s=10, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+                      s=12, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -135,7 +139,7 @@ plt.show()
 #Plot of the experimental binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['bind_ene'], cmap='jet', edgecolor='None',
-                      s=10, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+                      s=12, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -154,7 +158,7 @@ plt.show()
 plt.figure(figsize=(10, 6))
 norm = TwoSlopeNorm(vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['Diff_bind_ene'],
-                      cmap='seismic', norm=norm, edgecolor='None', s=10)
+                      cmap='seismic', norm=norm, edgecolor='None', s=12)
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -174,7 +178,7 @@ fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(111, projection='3d')  
 norm = TwoSlopeNorm(vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 scatter = ax.scatter(df2016['Z'], df2016['N'], df2016['Diff_bind_ene'], c=df2016['Diff_bind_ene'],
-                     cmap='seismic', norm=norm, edgecolor='None', s=10)
+                     cmap='seismic', norm=norm, edgecolor='None', s=12)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
 plt.title('3D Difference exp-teo binding energy per nucleon AME2016 ')
@@ -197,7 +201,7 @@ def calculate_shell_gaps(df, element, axis, type, column, year):
 def plot_shell_gaps(df, gap_col, type, title, filename, binding_plots_folder, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
-    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=10, vmin=vmin, vmax=vmax)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=12, vmin=vmin, vmax=vmax)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')
 
@@ -240,14 +244,14 @@ plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_ga
 
 
 # Nuclear masses
-rmse_2016_nuclear_mass = torch.sqrt(np.mean(df2016['Diff_masses'] ** 2))
+rmse_2016_nuclear_mass = np.sqrt(np.mean(df2016['Diff_masses'] ** 2))
 print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
 
 #Plot of the difference between theoretical and experimental nuclear masses
 plt.figure(figsize=(10, 6))
 norm = TwoSlopeNorm(vmin=df2016['Diff_masses'].min(), vcenter=0, vmax=df2016['Diff_masses'].max())
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['Diff_masses'],
-                      cmap='seismic', norm=norm, edgecolor='None', s=10)
+                      cmap='seismic', norm=norm, edgecolor='None', s=12)
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
