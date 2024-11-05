@@ -103,7 +103,7 @@ best_test_rmse = float('inf')
 best_model_state = None
 best_epoch = 0
 
-num_epochs = 1000
+num_epochs = 3000
 for epoch in range(num_epochs):
     model.train()
     optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
@@ -158,7 +158,7 @@ else:
     print('Best model not found. Loading last model')
 
 
-def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name):
+def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name, color_limits=None):
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy()
@@ -172,7 +172,13 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
     })
 
     plt.figure(figsize=(10, 6))
-    norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
+
+    if color_limits is not None:
+        vmin, vmax = color_limits
+        norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    else:
+        norm = TwoSlopeNorm(vmin=scatter_data['diff'].min(), vcenter=0, vmax=scatter_data['diff'].max())
+    
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
                           cmap='seismic', norm=norm, edgecolor='None', s=10)
     cbar = plt.colorbar(scatter)
@@ -191,13 +197,13 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
 
 
 calculate_and_plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                               'Difference exp-predicted (all data)', 'CNN-I4 plots/CNN-I4_diff_scatter.png')
+                               'Difference exp-predicted (all data)', 'CNN-I4 plots/CNN-I4_diff_scatter.png', color_limits=(-0.4, 0.4))
 
 calculate_and_plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                               'Difference exp-predicted (training set)', 'CNN-I4 plots/CNN-I4_diff_scatter_train.png')
+                               'Difference exp-predicted (training set)', 'CNN-I4 plots/CNN-I4_diff_scatter_train.png', color_limits=(-0.4, 0.4))
 
 calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                               'Difference exp-predicted (test set)', 'CNN-I4 plots/CNN-I4_diff_scatter_test.png')
+                               'Difference exp-predicted (test set)', 'CNN-I4 plots/CNN-I4_diff_scatter_test.png', color_limits=(-0.4, 0.4))
 
 
 n_splits = 5  

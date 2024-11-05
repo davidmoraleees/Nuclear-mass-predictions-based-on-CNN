@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
+import torch
 
 
 # Extracting data from WS4 file
@@ -104,8 +105,8 @@ print("AME2020 dataset: \n", df2020.head(), "\n")
 df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016)
 print("AME2016 dataset: \n", df2016.head(), "\n")
 
-rmse_2016 = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
-print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016)
+rmse_2016_bind_ene = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
+print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016_bind_ene, 'MeV')
 
 
 #Plots of AME2016 dataset:
@@ -116,7 +117,7 @@ if not os.path.exists(binding_plots_folder):
 #Plot of the theoretical binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['bind_ene_teo'], cmap='jet', edgecolor='None',
-                      s=25, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+                      s=10, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -134,7 +135,7 @@ plt.show()
 #Plot of the experimental binding energy as a function of Z and N
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['bind_ene'], cmap='jet', edgecolor='None',
-                      s=25, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+                      s=10, vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -153,7 +154,7 @@ plt.show()
 plt.figure(figsize=(10, 6))
 norm = TwoSlopeNorm(vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['Diff_bind_ene'],
-                      cmap='seismic', norm=norm, edgecolor='None', s=25)
+                      cmap='seismic', norm=norm, edgecolor='None', s=10)
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
@@ -173,7 +174,7 @@ fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(111, projection='3d')  
 norm = TwoSlopeNorm(vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 scatter = ax.scatter(df2016['Z'], df2016['N'], df2016['Diff_bind_ene'], c=df2016['Diff_bind_ene'],
-                     cmap='seismic', norm=norm, edgecolor='None', s=25)
+                     cmap='seismic', norm=norm, edgecolor='None', s=10)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
 plt.title('3D Difference exp-teo binding energy per nucleon AME2016 ')
@@ -196,7 +197,7 @@ def calculate_shell_gaps(df, element, axis, type, column, year):
 def plot_shell_gaps(df, gap_col, type, title, filename, binding_plots_folder, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
-    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=25, vmin=vmin, vmax=vmax)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=10, vmin=vmin, vmax=vmax)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')
 
@@ -239,14 +240,14 @@ plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_ga
 
 
 # Nuclear masses
-rmse_2016 = np.sqrt(np.nanmean(df2016['Diff_masses'] ** 2))
-print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016)
+rmse_2016_nuclear_mass = torch.sqrt(np.mean(df2016['Diff_masses'] ** 2))
+print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
 
 #Plot of the difference between theoretical and experimental nuclear masses
 plt.figure(figsize=(10, 6))
 norm = TwoSlopeNorm(vmin=df2016['Diff_masses'].min(), vcenter=0, vmax=df2016['Diff_masses'].max())
 scatter = plt.scatter(df2016['N'], df2016['Z'], c=df2016['Diff_masses'],
-                      cmap='seismic', norm=norm, edgecolor='None', s=25)
+                      cmap='seismic', norm=norm, edgecolor='None', s=10)
 cbar = plt.colorbar(scatter)
 cbar.set_label('(MeV)')
 magic_numbers = [8, 20, 28, 50, 82, 126]
