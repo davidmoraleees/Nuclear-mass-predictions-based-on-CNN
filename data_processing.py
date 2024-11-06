@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
-import torch
-
 
 # Extracting data from WS4 file
 with open('data/WS4.txt', 'r') as file:
@@ -32,6 +30,8 @@ def process_file(filename, header, widths, columns, column_names, year):
         index_col=False
     )
     df = df.replace({'#': ''}, regex=True) 
+    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
+
     df['Z'] = df['Z'].astype(int) 
     df['A'] = df['A'].astype(int)
     df['delta'] = np.where((df['Z'] % 2 == 0) & (df['N'] % 2 == 0), -1,  # Z and N even
@@ -65,16 +65,17 @@ def process_file(filename, header, widths, columns, column_names, year):
     m_p = 938.27208816
     m_n = 939.565378
 
-    if year == 2016:
-        df['A2'] = df['A2'].astype(str)
-        df['atomic_mass'] = df['atomic_mass'].astype(str)
-        df['atomic_mass'] = df['A2'] + df['atomic_mass']
-    else:
-        df['atomic_mass'] = df['atomic_mass'] #TO DO: fix AME2020
-        
+    df['A2'] = df['A2'].astype(str)
+    df['atomic_mass'] = df['atomic_mass'].astype(str)
+    df['atomic_mass'] = df['A2'] + df['atomic_mass']
     df['atomic_mass'] = pd.to_numeric(df['atomic_mass'], errors='coerce')
     df['atomic_mass'] = df['atomic_mass'].astype(float)
-    df['atomic_mass'] = df['atomic_mass']/(10**6)*uma # MeV
+    df['atomic_mass'] = df['atomic_mass']/(10**6) #u
+
+    df['atomic_mass_unc'] = pd.to_numeric(df['atomic_mass_unc'], errors='coerce')
+    df['atomic_mass_unc'] = df['atomic_mass_unc'].astype(float)
+    df['atomic_mass_unc'] = df['atomic_mass_unc']/(10**6) #u
+
     df['atomic_mass_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
     
     df['atomic_mass_2'] = Z*m_p + N*m_n - df['bind_ene_total']   
@@ -86,14 +87,13 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['M_N_exp'] = df['atomic_mass_2'] - Z*m_e + df['B_e']
     
     df['Diff_masses'] = df['M_N_exp'] - df['M_N_teo']
-    df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)] # Restrictions for our study case 
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
 
-columns_2020 = (1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 21, 22)
+columns_2020 = (1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 19, 21, 22)
 widths_2020 = (1, 3, 5, 5, 5, 1, 3, 4, 1, 14, 12, 13, 1, 10, 1, 2, 13, 11, 1, 3, 1, 13, 12, 1)
 column_names_2020 = ['N-Z', 'N', 'Z', 'A', 'Element', 'mass_exc', 'mass_exc_unc', 'bind_ene', 'bind_ene_unc',
-                     'beta_ene', 'beta_ene_unc', 'atomic_mass', 'atomic_mass_unc']
+                     'beta_ene', 'beta_ene_unc', 'A2', 'atomic_mass', 'atomic_mass_unc']
 header_2020 = 28
 
 columns_2016 = (1, 2, 3, 4, 6, 9, 10, 11, 12, 15, 16, 18, 20, 21)
