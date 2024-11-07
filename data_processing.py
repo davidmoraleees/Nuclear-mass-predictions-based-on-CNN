@@ -60,7 +60,7 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']
     df['Diff_bind_ene_total'] = df['bind_ene_total'] - df['bind_ene_teo_total']
  
-    uma = 931.4936 
+    uma = 931.49410372 
     m_e = 0.510998928 
     m_p = 938.27208816
     m_n = 939.565378
@@ -76,15 +76,17 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['atomic_mass_unc'] = df['atomic_mass_unc'].astype(float)
     df['atomic_mass_unc'] = df['atomic_mass_unc']/(10**6) #u
 
-    df['atomic_mass_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']
+    df['atomic_mass_teo'] = (Z*m_p + N*m_n - df['bind_ene_teo_total'])/uma*1.0000001 
     
-    df['atomic_mass_2'] = Z*m_p + N*m_n - df['bind_ene_total']   
+    df['atomic_mass_calc'] = (Z*m_p + N*m_n - df['bind_ene_total'])/uma*1.0000001   
+
+    df['mass_excess_calc'] = round((df['atomic_mass'] - A)*uma/1.0000001*1000, 5) # We correct a small deviation 
 
     df['B_e'] = (14.4381*(Z**2.39) + 1.55468*(10**-6)*(Z**5.35))*(10**-6)
 
     df['M_N_teo'] = df['atomic_mass_teo'] - Z*m_e + df['B_e']
 
-    df['M_N_exp'] = df['atomic_mass_2'] - Z*m_e + df['B_e']
+    df['M_N_exp'] = df['atomic_mass_calc'] - Z*m_e + df['B_e']
     
     df['Diff_masses'] = df['M_N_exp'] - df['M_N_teo']
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
