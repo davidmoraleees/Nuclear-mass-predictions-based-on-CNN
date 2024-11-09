@@ -34,7 +34,7 @@ def create_5x5_neighborhood(data, idx):
             n_grid[i+2, j+2] = neighbor_n  
 
             if len(neighbor_idx) > 0: #Verify if any index has been found
-                bind_ene_value = data.iloc[neighbor_idx[0]]['bind_ene']
+                bind_ene_value = data.iloc[neighbor_idx[0]]['M_N_exp']
                 bind_ene_grid[i + 2, j + 2] = bind_ene_value
                 bind_ene_values.append(bind_ene_value)
             else:
@@ -56,7 +56,7 @@ for idx in range(len(data)):
     z_grid, n_grid, bind_ene_grid = create_5x5_neighborhood(data, idx)
     input_grid = np.stack([z_grid, n_grid, bind_ene_grid], axis=0)
     inputs.append(input_grid)
-    target_value = data.iloc[idx]['bind_ene']
+    target_value = data.iloc[idx]['M_N_exp']
     targets.append(target_value)
 
 inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 3, 5, 5) where 'n' is the number of nucleus
@@ -85,7 +85,7 @@ class CNN_I3(nn.Module):
 
 model = CNN_I3().to(device) #Instance of our model
 criterion = nn.MSELoss() #Instance of the MSE
-optimizer = optim.Adamax(model.parameters(), lr=0.002) #model.parameters()=weights and biases to optimize
+optimizer = optim.Adamax(model.parameters(), lr=0.005) #model.parameters()=weights and biases to optimize
 #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
 #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
 

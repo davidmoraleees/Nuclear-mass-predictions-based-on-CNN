@@ -19,14 +19,12 @@ dfWS4.to_csv('data/WS4_cleaned.csv', index=False, header=True, sep=';')
 
 
 def process_file(filename, header, widths, columns, column_names, year):
-    "Function to extract data from AME2020 and AME2016 files"
+    '''Function to extract data from AME2020 and AME2016 files'''
     df = pd.read_fwf(filename, usecols=columns, names=column_names, widths=widths, header=header, index_col=False)
     df = df.replace({'#': ''}, regex=True)
     df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)]  # Restrictions for our study case
 
     df[['Z', 'A']] = df[['Z', 'A']].astype(int)
-    df['mass_exc'] = df['mass_exc'].astype(float)
-    
     df['delta'] = np.where((df['Z'] % 2 == 0) & (df['N'] % 2 == 0), -1, # Z and N even 
                   np.where(df['A'] % 2 == 1, 0, # A odd
                   np.where((df['Z'] % 2 == 1) & (df['N'] % 2 == 1), 1, np.nan))) # Z and N odds
@@ -35,28 +33,29 @@ def process_file(filename, header, widths, columns, column_names, year):
 
     A, Z, N, delta = df['A'], df['Z'], df['N'], df['delta']
     
-    av, aS, ac, aA, ap = 15.835, 18.33, 0.714, 23.2, 11.2  # MeV
+    av, aS, ac, aA, ap = 15.56, 17.23, 0.697, 23.285, 12  # MeV
     uma, m_e, m_p, m_n = 931.49410372, 0.51099895069, 938.27208943, 939.56542194  # MeV
     
     df['bind_ene'] = df['bind_ene'].astype(float) / 1000  # MeV
-    df['bind_ene_total'] = df['bind_ene'] * df['A']  # MeV
+    df['bind_ene_total'] = df['bind_ene'] * A  # MeV
     df['bind_ene_teo'] = (av*A - aS*A**(2/3) - ac*(Z**2)*(A**(-1/3)) - aA*((A-2*Z)**2)/A - ap*delta*(A**(-1/2))) / A  # MeV
-    df['bind_ene_teo_total'] = df['bind_ene_teo'] * df['A']  # MeV
+    df['bind_ene_teo_total'] = df['bind_ene_teo'] * A  # MeV
     df['Diff_bind_ene'] = df['bind_ene'] - df['bind_ene_teo']  # MeV
     df['Diff_bind_ene_total'] = df['bind_ene_total'] - df['bind_ene_teo_total']  # MeV
     
     df['A2'] = df['A2'].astype(str)
     df['atomic_mass'] = pd.to_numeric(df['A2'] + df['atomic_mass'], errors='coerce') * (10**-6) * uma  # MeV
     df['atomic_mass_unc'] = pd.to_numeric(df['atomic_mass_unc'], errors='coerce') * (10**-6) * uma  # MeV
-
     df['atomic_mass_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']  # MeV
     df['atomic_mass_calc'] = Z*m_p + N*m_n - df['bind_ene_total']  # MeV
     df['Diff_atomic_mass'] = df['atomic_mass'] - df['atomic_mass_calc']  # MeV
     
-    df['mass_excess_calc'] = (df['atomic_mass'] - A) * uma * 1000  # keV
+    df['mass_exc'] = df['mass_exc'].astype(float) # keV
+    df['mass_excess_calc'] = (df['atomic_mass']/uma - A) * uma * 1000  # keV
     df['Diff_mass_excess'] = df['mass_exc'] - df['mass_excess_calc']  # keV
 
-    df['bind_ene_calc'] = (Z*m_p + N*m_n) - df['atomic_mass'] * uma  # keV
+    df['bind_ene_calc'] = ((Z*m_p + N*m_n) - df['atomic_mass'])/A  # MeV
+    df['Diff_bind_ene_calcs'] = df['bind_ene'] - df['bind_ene_calc'] # MeV
     
     df['B_e'] = (14.4381*(Z**2.39) + 1.55468*(10**-6)*(Z**5.35)) * (10**-6)  # MeV
     df['M_N_teo'] = df['atomic_mass_teo'] - Z*m_e + df['B_e']  # MeV
@@ -91,6 +90,9 @@ print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mas
 
 rmse_2016_atomic_mass = np.sqrt(np.mean(df2016['Diff_atomic_mass'] ** 2))
 print('RMSE between atomic masses in AME2016 and calculated ones:', rmse_2016_atomic_mass)
+
+rmse_2016_mass_exc = np.sqrt(np.mean(df2016['Diff_mass_excess'] ** 2))
+print('RMSE between mass excess from AME and calculated ones: ', rmse_2016_mass_exc, 'keV')
 
 
 binding_plots_folder = 'Binding energy plots' #Plots folder of AME2016 dataset
@@ -144,6 +146,10 @@ plot_data(df2016, 'Diff_mass_excess', 'Difference exp-calculated in mass_excess 
 #Plot of the difference between atomic mass from AME and the one calculated                                  
 plot_data(df2016, 'Diff_atomic_mass', 'Difference exp-calculated in atomic mass AME2016', '(MeV)',
           'atomic_mass_expcalc_dif.png', binding_plots_folder, cmap='seismic')  
+
+#Plot of the difference between binding energy per nucleon from AME and the one calculated                                      
+plot_data(df2016, 'Diff_bind_ene_calcs', 'Difference exp-calculated in binding energy per nucleon AME2016', '(MeV)',
+          'bind_ene_expcalc_dif.png', binding_plots_folder, cmap='seismic')
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
 plot_data(df2016, 'Diff_nuclear_mass', 'Difference exp-teo in nuclear mass AME2016', '(MeV)',
