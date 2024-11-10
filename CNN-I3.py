@@ -13,16 +13,16 @@ print('Training on:', device)
 
 csv_file = 'data/mass2016_cleaned.csv'  
 data = pd.read_csv(csv_file, delimiter=';')
+data_feature = 'bind_ene'
 
-def create_5x5_neighborhood(data, idx):
+def create_5x5_neighborhood(data, idx, data_feature):
     current_n = data.iloc[idx]['N'] #Data for the target nucleus. 'idx'=row and 'N'=column
     current_z = data.iloc[idx]['Z']
     
     z_grid = np.zeros((5, 5))
     n_grid = np.zeros((5, 5))
-    bind_ene_grid = np.zeros((5, 5))
-    
-    bind_ene_values = []
+    data_feature_grid = np.zeros((5, 5))
+    data_feature_list = []
     
     for i in range(-2, 3): #The neighbourhood is defined from -2 to 2, 0 being the central value
         for j in range(-2, 3):
@@ -34,29 +34,30 @@ def create_5x5_neighborhood(data, idx):
             n_grid[i+2, j+2] = neighbor_n  
 
             if len(neighbor_idx) > 0: #Verify if any index has been found
-                bind_ene_value = data.iloc[neighbor_idx[0]]['M_N_exp']
-                bind_ene_grid[i + 2, j + 2] = bind_ene_value
-                bind_ene_values.append(bind_ene_value)
+                data_feature_value = data.iloc[neighbor_idx[0]][data_feature]
+                data_feature_grid[i + 2, j + 2] = data_feature_value
+                data_feature_list.append(data_feature_value)
             else:
-                bind_ene_grid[i + 2, j + 2] = np.nan 
+                data_feature_grid[i + 2, j + 2] = np.nan 
 
-    if bind_ene_values:
-        neighborhood_mean = np.mean(bind_ene_values)
+    if data_feature_list:
+        neighborhood_mean = np.mean(data_feature_list)
     else:
+        print('Warning: data feature list is empty. Proceeding with neighborhood_mean = 0')
         neighborhood_mean = 0
 
-    bind_ene_grid[np.isnan(bind_ene_grid)] = neighborhood_mean
-    bind_ene_grid[2, 2] = 0 #Target nucleus assigned to zero
-    return z_grid, n_grid, bind_ene_grid
+    data_feature_grid[np.isnan(data_feature_grid)] = neighborhood_mean
+    data_feature_grid[2, 2] = 0 #Target nucleus assigned to zero
+    return z_grid, n_grid, data_feature_grid
 
 inputs = [] #3x5x5 matrices of inputs
 targets = [] #Binding energies of the target nucleus
 
 for idx in range(len(data)):
-    z_grid, n_grid, bind_ene_grid = create_5x5_neighborhood(data, idx)
-    input_grid = np.stack([z_grid, n_grid, bind_ene_grid], axis=0)
+    z_grid, n_grid, data_feature_grid = create_5x5_neighborhood(data, idx, data_feature)
+    input_grid = np.stack([z_grid, n_grid, data_feature_grid], axis=0)
     inputs.append(input_grid)
-    target_value = data.iloc[idx]['M_N_exp']
+    target_value = data.iloc[idx][data_feature]
     targets.append(target_value)
 
 inputs_tensor = torch.tensor(np.array(inputs), dtype=torch.float32).to(device) #shape: (n, 3, 5, 5) where 'n' is the number of nucleus
@@ -82,54 +83,73 @@ class CNN_I3(nn.Module):
         x = self.fc(x)
         return x
 
+def save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
+    if best_model_state is not None:
+            torch.save(best_model_state, f'cnn_i3_best_model.pt')
+            print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
+    else:
+        torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+        print('Best model not found. Saving last model')
+    return
+
+
+def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
+    else:
+        model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
+        print('Best model not found. Loading last model')
+    return
+
+
+def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs=3000, learning_rate=0.005):
+    criterion = nn.MSELoss() #Instance of the MSE
+    optimizer = optim.Adamax(model.parameters(), lr=learning_rate) #model.parameters()=weights and biases to optimize
+    #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
+    #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
+
+    print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
+    #p.numel() counts the number of elements that has every tensor. 
+    #We only count those which are used for training (requires_grad=True).
+
+    train_loss_rmse_values = []
+    test_loss_rmse_values = []
+    best_test_rmse = float('inf')
+    best_model_state = None
+    best_epoch = 0
+
+    for epoch in range(num_epochs):
+        model.train()
+        optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
+        train_outputs = model(train_inputs.to(device))
+        train_loss = criterion(train_outputs, train_targets)
+        train_loss.backward() #Gradients of the loss with respect to model parameters using backpropagation
+        optimizer.step() #We update the model parameters using the calculated gradients
+        train_loss_rmse = torch.sqrt(train_loss)
+        train_loss_rmse_values.append(train_loss_rmse.item())
+        print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {train_loss_rmse.item()}')
+
+        model.eval()
+        with torch.no_grad(): #We disable gradient calculation for the test phase
+            test_outputs = model(test_inputs.to(device))
+            test_loss_mse = criterion(test_outputs, test_targets)
+            test_loss_rmse = torch.sqrt(test_loss_mse)
+            test_loss_rmse_values.append(test_loss_rmse.item())
+        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
+
+        if test_loss_rmse.item() < best_test_rmse:
+            best_test_rmse = test_loss_rmse.item()
+            best_model_state = model.state_dict()
+            best_epoch = epoch + 1
+
+    save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs)
+    return train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch
+
 
 model = CNN_I3().to(device) #Instance of our model
-criterion = nn.MSELoss() #Instance of the MSE
-optimizer = optim.Adamax(model.parameters(), lr=0.005) #model.parameters()=weights and biases to optimize
-#lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
-#Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
-
-print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
-#p.numel() counts the number of elements that has every tensor. 
-#We only count those which are used for training (requires_grad=True).
-
-train_loss_rmse_values = []
-test_loss_rmse_values = []
-best_test_rmse = float('inf')
-best_model_state = None
-best_epoch = 0
-
-num_epochs = 3000
-for epoch in range(num_epochs):
-    model.train()
-    optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
-    train_outputs = model(train_inputs.to(device))
-    train_loss = criterion(train_outputs, train_targets)
-    train_loss.backward() #Gradients of the loss with respect to model parameters using backpropagation
-    optimizer.step() #We update the model parameters using the calculated gradients
-    train_loss_rmse = torch.sqrt(train_loss)
-    train_loss_rmse_values.append(train_loss_rmse.item())
-    print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {train_loss_rmse.item()}')
-
-    model.eval()
-    with torch.no_grad(): #We disable gradient calculation for the test phase
-        test_outputs = model(test_inputs.to(device))
-        test_loss_mse = criterion(test_outputs, test_targets)
-        test_loss_rmse = torch.sqrt(test_loss_mse)
-        test_loss_rmse_values.append(test_loss_rmse.item())
-    print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
-
-    if test_loss_rmse.item() < best_test_rmse:
-        best_test_rmse = test_loss_rmse.item()
-        best_model_state = model.state_dict()
-        best_epoch = epoch + 1
-
-if best_model_state is not None:
-    torch.save(best_model_state, f'cnn_i3_best_model.pt')
-    print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
-else:
-    torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
-    print('Best model not found. Saving last model')
+train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
+    model, train_inputs, train_targets, test_inputs, test_targets)
 
 
 plt.figure(figsize=(10, 5))
@@ -146,15 +166,8 @@ plt.savefig(f'CNN-I3 plots/CNN-I3_evolution.png')
 plt.show()
 
 
-if best_model_state is not None:
-    model.load_state_dict(best_model_state)
-    print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
-else:
-    model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
-    print('Best model not found. Loading last model')
 
-
-def calculate_and_plot_differences(data, inputs, targets, indices, model, device, title, file_name):
+def plot_differences(data, inputs, targets, indices, model, device, title, file_name):
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy()
@@ -164,8 +177,7 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
     scatter_data = pd.DataFrame({
         'N': data.iloc[indices]['N'].values,
         'Z': data.iloc[indices]['Z'].values,
-        'diff': diff.flatten()
-    })
+        'diff': diff.flatten()})
 
     plt.figure(figsize=(10, 6))
 
@@ -177,7 +189,6 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
         vmin, vmax = color_limits_storage['color_limits']
 
     norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
-    
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
@@ -193,16 +204,18 @@ def calculate_and_plot_differences(data, inputs, targets, indices, model, device
     plt.title(title)
     plt.savefig(file_name)
     plt.show()
+    return
+
 
 color_limits_storage = {}
-calculate_and_plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                               'Difference exp-predicted (all data)', 'CNN-I3 plots/CNN-I3_diff_scatter.png')
+plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
+                'Difference exp-predicted (all data)', 'CNN-I3 plots/CNN-I3_diff_scatter.png')
 
-calculate_and_plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                               'Difference exp-predicted (training set)', 'CNN-I3 plots/CNN-I3_diff_scatter_train.png')
+plot_differences(data, train_inputs, train_targets, train_indices, model, device,
+                'Difference exp-predicted (training set)', 'CNN-I3 plots/CNN-I3_diff_scatter_train.png')
 
-calculate_and_plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                               'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png')
+plot_differences(data, test_inputs, test_targets, test_indices, model, device,
+                'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png')
 
 
 n_splits = 5  
@@ -217,40 +230,12 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
     train_inputs, test_inputs = inputs_tensor[train_idx], inputs_tensor[test_idx]
     train_targets, test_targets = targets_tensor[train_idx], targets_tensor[test_idx]
     model = CNN_I3().to(device)
-    optimizer = optim.Adamax(model.parameters(), lr=0.002)
-    best_test_rmse = float('inf')
-    best_model_state = None
-    best_epoch = 0
-    train_loss_rmse_values = []
-    test_loss_rmse_values = []
 
-    num_epochs = 1000
-    for epoch in range(num_epochs):
-        model.train()
-        optimizer.zero_grad() 
-        train_outputs = model(train_inputs.to(device))
-        train_loss = criterion(train_outputs, train_targets)
-        train_loss.backward() 
-        optimizer.step() 
-        train_loss_rmse = torch.sqrt(train_loss)
-        train_loss_rmse_values.append(train_loss_rmse.item())
-        print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {train_loss_rmse.item()}')
-
-        model.eval()
-        with torch.no_grad(): 
-            test_outputs = model(test_inputs.to(device))
-            test_loss_mse = criterion(test_outputs, test_targets)
-            test_loss_rmse = torch.sqrt(test_loss_mse)
-            test_loss_rmse_values.append(test_loss_rmse.item())
-        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
-
-        if test_loss_rmse.item() < best_test_rmse:
-            best_test_rmse = test_loss_rmse.item()
-            best_model_state = model.state_dict()
-            best_epoch = epoch + 1
-
-    rmse_train_list.append(train_loss_rmse_values[-1])  
-    rmse_test_list.append(test_loss_rmse_values[-1])  
+    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
+        model, train_inputs, train_targets, test_inputs, test_targets)
+    
+    rmse_train_list.append(min(train_loss_rmse_values))
+    rmse_test_list.append(min(test_loss_rmse_values)) 
 
     print(f"Fold {fold + 1}: Best RMSE (Test): {best_test_rmse:.4f}MeV in epoch {best_epoch}")
 
