@@ -13,7 +13,10 @@ print('Training on:', device)
 
 csv_file = 'data/mass2016_cleaned.csv'  
 data = pd.read_csv(csv_file, delimiter=';')
-data_feature = 'bind_ene'
+data_feature = 'M_N_exp'
+num_epochs = 3000
+learning_rate = 0.002
+
 
 def create_5x5_neighborhood(data, idx, data_feature):
     current_n = data.iloc[idx]['N'] #Data for the target nucleus. 'idx'=row and 'N'=column
@@ -103,7 +106,7 @@ def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
     return
 
 
-def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs=3000, learning_rate=0.005):
+def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate):
     criterion = nn.MSELoss() #Instance of the MSE
     optimizer = optim.Adamax(model.parameters(), lr=learning_rate) #model.parameters()=weights and biases to optimize
     #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
@@ -128,7 +131,6 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
         optimizer.step() #We update the model parameters using the calculated gradients
         train_loss_rmse = torch.sqrt(train_loss)
         train_loss_rmse_values.append(train_loss_rmse.item())
-        print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {train_loss_rmse.item()}')
 
         model.eval()
         with torch.no_grad(): #We disable gradient calculation for the test phase
@@ -136,8 +138,10 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
             test_loss_mse = criterion(test_outputs, test_targets)
             test_loss_rmse = torch.sqrt(test_loss_mse)
             test_loss_rmse_values.append(test_loss_rmse.item())
-        print(f'Epoch [{epoch+1}/{num_epochs}], Test Loss    : {test_loss_rmse.item()}')
 
+        if (epoch + 1) % 100 == 0:
+            print(f'Epoch [{epoch+1}/{num_epochs}], Train loss: {train_loss_rmse.item():.4f} MeV, Test loss: {test_loss_rmse.item():.4f} MeV')
+                  
         if test_loss_rmse.item() < best_test_rmse:
             best_test_rmse = test_loss_rmse.item()
             best_model_state = model.state_dict()
@@ -149,7 +153,7 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
 
 model = CNN_I3().to(device) #Instance of our model
 train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-    model, train_inputs, train_targets, test_inputs, test_targets)
+    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate)
 
 
 plt.figure(figsize=(10, 5))
@@ -232,10 +236,10 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
     model = CNN_I3().to(device)
 
     train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-        model, train_inputs, train_targets, test_inputs, test_targets)
+        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate)
     
     rmse_train_list.append(min(train_loss_rmse_values))
-    rmse_test_list.append(min(test_loss_rmse_values)) 
+    rmse_test_list.append(best_test_rmse) 
 
     print(f"Fold {fold + 1}: Best RMSE (Test): {best_test_rmse:.4f}MeV in epoch {best_epoch}")
 
