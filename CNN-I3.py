@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -13,9 +14,11 @@ print('Training on:', device)
 
 csv_file = 'data/mass2016_cleaned.csv'  
 data = pd.read_csv(csv_file, delimiter=';')
-data_feature = 'M_N_exp'
-num_epochs = 3000
+data_feature = 'bind_ene'
+num_epochs = 100000
+patience = 1000
 learning_rate = 0.002
+optimizer_name = 'Adamax'
 
 
 def create_5x5_neighborhood(data, idx, data_feature):
@@ -86,6 +89,7 @@ class CNN_I3(nn.Module):
         x = self.fc(x)
         return x
 
+
 def save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
     if best_model_state is not None:
             torch.save(best_model_state, f'cnn_i3_best_model.pt')
@@ -106,9 +110,10 @@ def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
     return
 
 
-def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate):
+def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience):
     criterion = nn.MSELoss() #Instance of the MSE
-    optimizer = optim.Adamax(model.parameters(), lr=learning_rate) #model.parameters()=weights and biases to optimize
+    OptimizerClass = getattr(optim, optimizer_name)
+    optimizer = OptimizerClass(model.parameters(), lr=learning_rate) #model.parameters()=weights and biases to optimize
     #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
     #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
 
@@ -121,6 +126,7 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
     best_test_rmse = float('inf')
     best_model_state = None
     best_epoch = 0
+    epochs_without_improvement = 0
 
     for epoch in range(num_epochs):
         model.train()
@@ -146,29 +152,16 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
             best_test_rmse = test_loss_rmse.item()
             best_model_state = model.state_dict()
             best_epoch = epoch + 1
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
+
+        if epochs_without_improvement >= patience:
+            print(f'There was no improvement in {patience} epochs. Training stopped.')
+            break
 
     save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs)
     return train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch
-
-
-model = CNN_I3().to(device) #Instance of our model
-train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate)
-
-
-plt.figure(figsize=(10, 5))
-plt.plot(range(1, num_epochs + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
-plt.plot(range(1, num_epochs + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
-plt.title(f'Evolution of RMSE over {num_epochs} epochs')
-plt.xlabel('Època')
-plt.ylabel('RMSE (MeV)')
-max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
-plt.ylim(0, max_value) 
-plt.legend()
-plt.grid()
-plt.savefig(f'CNN-I3 plots/CNN-I3_evolution.png')
-plt.show()
-
 
 
 def plot_differences(data, inputs, targets, indices, model, device, title, file_name):
@@ -207,9 +200,65 @@ def plot_differences(data, inputs, targets, indices, model, device, title, file_
     plt.ylabel('Z')
     plt.title(title)
     plt.savefig(file_name)
-    plt.show()
     return
 
+
+# Learning rates study
+learning_rates = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1, 0.5]
+output_folder = 'CNN-I3 experiments learning rates'
+os.makedirs(output_folder, exist_ok=True)
+
+for lr in learning_rates:
+    print(f"\nTraining with learning rate: {lr}")
+    
+    model = CNN_I3().to(device)
+    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
+        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, lr, optimizer_name, patience)
+    
+    plt.figure(figsize=(10, 5))
+    epochs_used = len(train_loss_rmse_values)
+    plt.plot(range(1, epochs_used + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
+    plt.plot(range(1, epochs_used + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
+    plt.title(f'Evolution of RMSE over {num_epochs} epochs (lr={lr})')
+    plt.xlabel('Epoch')
+    plt.ylabel('RMSE (MeV)')
+    max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
+    plt.ylim(0, max_value) 
+    plt.legend()
+    plt.grid()
+    plt.savefig(f'CNN-I3 plots/CNN-I3_evolution.png')
+    
+    color_limits_storage = {}
+    plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
+                     f'Difference exp-predicted (all data, lr={lr})',
+                     f"{output_folder}/diff_scatter_all_lr_{lr}.png")
+    
+    plot_differences(data, train_inputs, train_targets, train_indices, model, device,
+                     f'Difference exp-predicted (training set, lr={lr})',
+                     f"{output_folder}/diff_scatter_train_lr_{lr}.png")
+    
+    plot_differences(data, test_inputs, test_targets, test_indices, model, device,
+                     f'Difference exp-predicted (test set, lr={lr})',
+                     f"{output_folder}/diff_scatter_test_lr_{lr}.png")
+    
+
+# One training of the model
+model = CNN_I3().to(device) #Instance of our model
+train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
+    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience)
+
+plt.figure(figsize=(10, 5))
+epochs_used = len(train_loss_rmse_values)
+plt.plot(range(1, epochs_used + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
+plt.plot(range(1, epochs_used + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
+plt.title(f'Evolution of RMSE over {num_epochs} epochs')
+plt.xlabel('Època')
+plt.ylabel('RMSE (MeV)')
+max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
+plt.ylim(0, max_value) 
+plt.legend()
+plt.grid()
+plt.savefig(f'CNN-I3 plots/CNN-I3_evolution.png')
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
@@ -222,7 +271,8 @@ plot_differences(data, test_inputs, test_targets, test_indices, model, device,
                 'Difference exp-predicted (test set)', 'CNN-I3 plots/CNN-I3_diff_scatter_test.png')
 
 
-n_splits = 5  
+# K-folding
+n_splits = 5
 kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
 
 rmse_train_list = []
@@ -236,7 +286,7 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
     model = CNN_I3().to(device)
 
     train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate)
+        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience)
     
     rmse_train_list.append(min(train_loss_rmse_values))
     rmse_test_list.append(best_test_rmse) 

@@ -18,10 +18,20 @@ dfWS4= pd.DataFrame(data_rows, columns=header)
 dfWS4.to_csv('data/WS4_cleaned.csv', index=False, header=True, sep=';')
 
 
-def process_file(filename, header, widths, columns, column_names, year):
+
+def filter_rows_with_hashtags(df, remove):
+    if remove:
+        mask = ~df.apply(lambda row: row.astype(str).str.contains('#').any(), axis=1)
+        df_filtered = df[mask]
+    else:
+        df_filtered = df.replace({'#': ''}, regex=True)
+    return df_filtered
+
+
+def process_file(filename, header, widths, columns, column_names, year, remove):
     '''Function to extract data from AME2020 and AME2016 files'''
     df = pd.read_fwf(filename, usecols=columns, names=column_names, widths=widths, header=header, index_col=False)
-    df = df.replace({'#': ''}, regex=True)
+    df = filter_rows_with_hashtags(df, remove)
     df = df[(df['N'] >= 8) & (df['N'] < 180) & (df['Z'] >= 8) & (df['Z'] < 120)]  # Restrictions for our study case
 
     df[['Z', 'A']] = df[['Z', 'A']].astype(int)
@@ -34,8 +44,11 @@ def process_file(filename, header, widths, columns, column_names, year):
     A, Z, N, delta = df['A'], df['Z'], df['N'], df['delta']
     
     av, aS, ac, aA, ap = 15.56, 17.23, 0.697, 23.285, 12  # MeV
-    uma, m_e, m_p, m_n = 931.49410372, 0.51099895069, 938.27208943, 939.56542194  # MeV
-    
+    uma = 931.49410372
+    m_e = 0.51099895069
+    m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
+    m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
+
     df['bind_ene'] = df['bind_ene'].astype(float) / 1000  # MeV
     df['bind_ene_total'] = df['bind_ene'] * A  # MeV
     df['bind_ene_teo'] = (av*A - aS*A**(2/3) - ac*(Z**2)*(A**(-1/3)) - aA*((A-2*Z)**2)/A - ap*delta*(A**(-1/2))) / A  # MeV
@@ -46,20 +59,20 @@ def process_file(filename, header, widths, columns, column_names, year):
     df['A2'] = df['A2'].astype(str)
     df['atomic_mass'] = pd.to_numeric(df['A2'] + df['atomic_mass'], errors='coerce') * (10**-6) * uma  # MeV
     df['atomic_mass_unc'] = pd.to_numeric(df['atomic_mass_unc'], errors='coerce') * (10**-6) * uma  # MeV
-    df['atomic_mass_teo'] = Z*m_p + N*m_n - df['bind_ene_teo_total']  # MeV
-    df['atomic_mass_calc'] = Z*m_p + N*m_n - df['bind_ene_total']  # MeV
+    df['atomic_mass_teo'] = Z*m_H + N*m_n - df['bind_ene_teo_total']  # MeV
+    df['atomic_mass_calc'] = Z*m_H + N*m_n - df['bind_ene_total']  # MeV
     df['Diff_atomic_mass'] = df['atomic_mass'] - df['atomic_mass_calc']  # MeV
     
     df['mass_exc'] = df['mass_exc'].astype(float) # keV
     df['mass_excess_calc'] = (df['atomic_mass']/uma - A) * uma * 1000  # keV
     df['Diff_mass_excess'] = df['mass_exc'] - df['mass_excess_calc']  # keV
 
-    df['bind_ene_calc'] = ((Z*m_p + N*m_n) - df['atomic_mass'])/A  # MeV
+    df['bind_ene_calc'] = ((Z*m_H + N*m_n) - df['atomic_mass'])/A  # MeV
     df['Diff_bind_ene_calcs'] = df['bind_ene'] - df['bind_ene_calc'] # MeV
     
     df['B_e'] = (14.4381*(Z**2.39) + 1.55468*(10**-6)*(Z**5.35)) * (10**-6)  # MeV
     df['M_N_teo'] = df['atomic_mass_teo'] - Z*m_e + df['B_e']  # MeV
-    df['M_N_exp'] = df['atomic_mass_calc'] - Z*m_e + df['B_e']  # MeV
+    df['M_N_exp'] = df['atomic_mass'] - Z*m_e + df['B_e']  # MeV
     df['Diff_nuclear_mass'] = df['M_N_exp'] - df['M_N_teo']  # MeV
     
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
@@ -78,21 +91,24 @@ column_names_2016 = ['index', 'N-Z', 'N', 'Z', 'A', 'empty', 'Element', 'empty2'
                      'empty6', 'A2', 'empty7', 'atomic_mass', 'atomic_mass_unc']
 header_2016 = 31
 
-df2020 = process_file('data/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020)
-df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016)
+df2020 = process_file('data/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, False)
+df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
 
 
 rmse_2016_bind_ene = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
 print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016_bind_ene, 'MeV')
 
-rmse_2016_nuclear_mass = np.sqrt(np.mean(df2016['Diff_nuclear_mass'] ** 2))
-print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
-
 rmse_2016_atomic_mass = np.sqrt(np.mean(df2016['Diff_atomic_mass'] ** 2))
-print('RMSE between atomic masses in AME2016 and calculated ones:', rmse_2016_atomic_mass)
+print('RMSE between atomic masses in AME2016 and calculated ones:', rmse_2016_atomic_mass, 'MeV')
 
 rmse_2016_mass_exc = np.sqrt(np.mean(df2016['Diff_mass_excess'] ** 2))
 print('RMSE between mass excess from AME and calculated ones: ', rmse_2016_mass_exc, 'keV')
+
+rmse_2016_bind_enes = np.sqrt(np.mean(df2016['Diff_bind_ene_calcs'] ** 2))
+print('RMSE between binding energies per nucleon in AME2016 and calculated ones:', rmse_2016_bind_enes, 'MeV')
+
+rmse_2016_nuclear_mass = np.sqrt(np.mean(df2016['Diff_nuclear_mass'] ** 2))
+print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
 
 
 binding_plots_folder = 'Binding energy plots' #Plots folder of AME2016 dataset
