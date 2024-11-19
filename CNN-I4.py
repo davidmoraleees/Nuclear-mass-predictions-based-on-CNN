@@ -14,9 +14,9 @@ print('Training on:', device)
 
 csv_file = 'data/mass2016_cleaned.csv'  
 data = pd.read_csv(csv_file, delimiter=';')
-data_feature = 'bind_ene'
+data_feature = 'bind_ene_total'
 num_epochs = 100000
-patience = 1000
+patience = 3000
 learning_rate = 0.002
 optimizer_name = 'Adamax'
 
@@ -95,10 +95,10 @@ class CNN_I4(nn.Module):
 
 def save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
     if best_model_state is not None:
-            torch.save(best_model_state, f'cnn_i3_best_model.pt')
+            torch.save(best_model_state, f'CNN-I4 results/cnn_i4_best_model.pt')
             print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
     else:
-        torch.save(model.state_dict(), f'cnn_i3_model_{num_epochs}_epochs.pt')
+        torch.save(model.state_dict(), f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs.pt')
         print('Best model not found. Saving last model')
     return
 
@@ -108,7 +108,7 @@ def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
         model.load_state_dict(best_model_state)
         print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
     else:
-        model.load_state_dict(torch.load(f'cnn_i3_model_{num_epochs}_epochs.pt'))
+        model.load_state_dict(torch.load(f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs.pt'))
         print('Best model not found. Loading last model')
     return
 
@@ -167,7 +167,7 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
     return train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch
 
 
-def plot_differences(data, inputs, targets, indices, model, device, title, file_name):
+def plot_differences(data, inputs, targets, indices, model, device, title, file_name, best_test_rmse):
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy()
@@ -201,9 +201,91 @@ def plot_differences(data, inputs, targets, indices, model, device, title, file_
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z')
-    plt.title(title)
+    plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
     plt.savefig(file_name)
     return
+
+
+def plot_differences_nuclear_masses(data, inputs, targets, indices, model, device, title, file_name, best_test_rmse):
+    uma = 931.49410372
+    m_e = 0.51099895069
+    m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
+    m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
+
+    model.eval() 
+    with torch.no_grad():
+        outputs = model(inputs.to(device)).cpu().numpy().flatten()
+        outputs = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - outputs
+        outputs = outputs - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices]
+
+        targets_np = targets.cpu().numpy().flatten()
+        targets_np = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - targets_np
+        targets_np = targets_np - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices]
+
+        diff = targets_np - outputs
+
+    scatter_data = pd.DataFrame({
+        'N': data.iloc[indices]['N'].values,
+        'Z': data.iloc[indices]['Z'].values,
+        'diff': diff.to_numpy()})
+
+    plt.figure(figsize=(10, 6))
+
+    if 'color_limits' not in color_limits_storage:
+        vmin = scatter_data['diff'].min()
+        vmax = scatter_data['diff'].max()
+        color_limits_storage['color_limits'] = (vmin, vmax)
+    else:
+        vmin, vmax = color_limits_storage['color_limits']
+
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
+                          cmap='seismic', norm=norm, edgecolor='None', s=12)
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('(MeV)')
+    magic_numbers = [8, 20, 28, 50, 82, 126]
+    for magic in magic_numbers:
+        plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+        plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.xticks(magic_numbers)
+    plt.yticks(magic_numbers)
+    plt.xlabel('N')
+    plt.ylabel('Z')
+    plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
+    plt.savefig(file_name)
+    return
+
+
+# One training of the model
+model = CNN_I4().to(device) #Instance of our model
+train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
+    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience)
+
+plt.figure(figsize=(10, 5))
+epochs_used = len(train_loss_rmse_values)
+plt.plot(range(1, epochs_used + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
+plt.plot(range(1, epochs_used + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
+plt.title(f'Evolution of RMSE over {num_epochs} epochs')
+plt.xlabel('Època')
+plt.ylabel('RMSE (MeV)')
+max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
+plt.ylim(0, max_value) 
+plt.legend()
+plt.grid()
+plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
+
+color_limits_storage = {}
+plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
+                'Difference exp-predicted (all data)', 'CNN-I4 results/CNN-I4_diff_scatter.png', best_test_rmse)
+
+plot_differences(data, train_inputs, train_targets, train_indices, model, device,
+                'Difference exp-predicted (training set)', 'CNN-I4 results/CNN-I4_diff_scatter_train.png', best_test_rmse)
+
+plot_differences(data, test_inputs, test_targets, test_indices, model, device,
+                'Difference exp-predicted (test set)', 'CNN-I4 results/CNN-I4_diff_scatter_test.png', best_test_rmse)
+
+plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
+                'Difference exp-predicted (all data) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
 
 
 # Learning rates study
@@ -229,50 +311,21 @@ for lr in learning_rates:
     plt.ylim(0, max_value) 
     plt.legend()
     plt.grid()
-    plt.savefig(f'CNN-I4 plots/CNN-I4_evolution.png')
+    plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
     
     color_limits_storage = {}
     plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
                      f'Difference exp-predicted (all data, lr={lr})',
-                     f"{output_folder}/diff_scatter_all_lr_{lr}.png")
+                     f"{output_folder}/diff_scatter_all_lr_{lr}.png", best_test_rmse)
     
     plot_differences(data, train_inputs, train_targets, train_indices, model, device,
                      f'Difference exp-predicted (training set, lr={lr})',
-                     f"{output_folder}/diff_scatter_train_lr_{lr}.png")
+                     f"{output_folder}/diff_scatter_train_lr_{lr}.png", best_test_rmse)
     
     plot_differences(data, test_inputs, test_targets, test_indices, model, device,
                      f'Difference exp-predicted (test set, lr={lr})',
-                     f"{output_folder}/diff_scatter_test_lr_{lr}.png")
+                     f"{output_folder}/diff_scatter_test_lr_{lr}.png", best_test_rmse)
     
-
-# One training of the model
-model = CNN_I4().to(device) #Instance of our model
-train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience)
-
-plt.figure(figsize=(10, 5))
-epochs_used = len(train_loss_rmse_values)
-plt.plot(range(1, epochs_used + 1), train_loss_rmse_values, label='Training RMSE', color='blue', linewidth=0.5)
-plt.plot(range(1, epochs_used + 1), test_loss_rmse_values, label='Test RMSE', color='red', linewidth=0.5)
-plt.title(f'Evolution of RMSE over {num_epochs} epochs')
-plt.xlabel('Època')
-plt.ylabel('RMSE (MeV)')
-max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
-plt.ylim(0, max_value) 
-plt.legend()
-plt.grid()
-plt.savefig(f'CNN-I4 plots/CNN-I4_evolution.png')
-
-color_limits_storage = {}
-plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                'Difference exp-predicted (all data)', 'CNN-I4 plots/CNN-I4_diff_scatter.png')
-
-plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                'Difference exp-predicted (training set)', 'CNN-I4 plots/CNN-I4_diff_scatter_train.png')
-
-plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                'Difference exp-predicted (test set)', 'CNN-I4 plots/CNN-I4_diff_scatter_test.png')
-
 
 # K-folding
 n_splits = 5

@@ -98,6 +98,9 @@ df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_201
 rmse_2016_bind_ene = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
 print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016_bind_ene, 'MeV')
 
+rmse_2016_bind_ene_total = np.sqrt(np.mean(df2016['Diff_bind_ene_total'] ** 2))
+print('RMSE liquid droplet model (2016) binding energy: ', rmse_2016_bind_ene_total, 'MeV')
+
 rmse_2016_atomic_mass = np.sqrt(np.mean(df2016['Diff_atomic_mass'] ** 2))
 print('RMSE between atomic masses in AME2016 and calculated ones:', rmse_2016_atomic_mass, 'MeV')
 
@@ -111,9 +114,9 @@ rmse_2016_nuclear_mass = np.sqrt(np.mean(df2016['Diff_nuclear_mass'] ** 2))
 print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
 
 
-binding_plots_folder = 'Binding energy plots' #Plots folder of AME2016 dataset
-if not os.path.exists(binding_plots_folder):
-    os.makedirs(binding_plots_folder)
+data_processing_plots = 'Data processing plots' #Plots folder of AME2016 dataset
+if not os.path.exists(data_processing_plots):
+    os.makedirs(data_processing_plots)
 
 def plot_data(df, df_column, title, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
     plt.figure(figsize=(10, 6))
@@ -145,31 +148,47 @@ def plot_data(df, df_column, title, colorbar_label, filename, folder, cmap, vmin
 
 #Plot of the theoretical binding energy per nucleon as a function of Z and N
 plot_data(df2016, 'bind_ene_teo', 'Theoretical binding energy per nucleon AME2016', '(MeV)', 'bind_teo_per_nucleon.png',
-          binding_plots_folder, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+          data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the experimental binding energy per nucleon as a function of Z and N
 plot_data(df2016, 'bind_ene', 'Experimental binding energy per nucleon AME2016', '(MeV)', 'bind_exp_per_nucleon.png',
-          binding_plots_folder, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
+          data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the difference between theoretical and experimental binding energies per nucleon
 plot_data(df2016, 'Diff_bind_ene', 'Difference exp-teo binding energy per nucleon AME2016', '(MeV)', 'bind_teoexp_dif_per_nucleon.png',
-          binding_plots_folder, cmap='seismic', vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
+          data_processing_plots, cmap='seismic', vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 
 #Plot of the difference between mass excess from AME and the one calculated
 plot_data(df2016, 'Diff_mass_excess', 'Difference exp-calculated in mass_excess AME2016', '(keV)',
-          'mass_excess_expcalc_dif.png', binding_plots_folder, cmap='seismic') 
+          'mass_excess_expcalc_dif.png', data_processing_plots, cmap='seismic') 
                                    
 #Plot of the difference between atomic mass from AME and the one calculated                                  
 plot_data(df2016, 'Diff_atomic_mass', 'Difference exp-calculated in atomic mass AME2016', '(MeV)',
-          'atomic_mass_expcalc_dif.png', binding_plots_folder, cmap='seismic')  
+          'atomic_mass_expcalc_dif.png', data_processing_plots, cmap='seismic')
+
+#Plot of the experimental atomic mass                                        
+plot_data(df2016, 'atomic_mass', 'Experimental atomic mass AME2016', '(MeV)',
+          'atomic_mass_exp.png', data_processing_plots, cmap='seismic')
+
+#Plot of the theoretical atomic mass                                        
+plot_data(df2016, 'atomic_mass_teo', 'Theoretical atomic mass AME2016', '(MeV)',
+          'atomic_mass_teo.png', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between binding energy per nucleon from AME and the one calculated                                      
 plot_data(df2016, 'Diff_bind_ene_calcs', 'Difference exp-calculated in binding energy per nucleon AME2016', '(MeV)',
-          'bind_ene_expcalc_dif.png', binding_plots_folder, cmap='seismic')
+          'bind_ene_expcalc_dif.png', data_processing_plots, cmap='seismic')
+
+#Plot of the experimental nuclear mass from AME as a function of Z and N                                      
+plot_data(df2016, 'M_N_exp', 'Experimental nuclear mass AME2016', '(MeV)',
+          'nuclear_mass_exp.png', data_processing_plots, cmap='seismic')
+
+#Plot of the theoretical nuclear mass as a function of Z and N                                      
+plot_data(df2016, 'M_N_teo', 'Theoretical nuclear mass AME2016', '(MeV)',
+          'nuclear_mass_teo.png', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
 plot_data(df2016, 'Diff_nuclear_mass', 'Difference exp-teo in nuclear mass AME2016', '(MeV)',
-          'nuclear_mass_expteo_dif.png', binding_plots_folder, cmap='seismic')
+          'nuclear_mass_expteo_dif.png', data_processing_plots, cmap='seismic')
 
 #3D plot of the difference between theoretical and experimental binding energies per nucleon
 fig = plt.figure(figsize=(10, 6))
@@ -182,7 +201,7 @@ ax.set_ylabel('N')
 plt.title('3D Difference exp-teo binding energy per nucleon AME2016 ')
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('(MeV)')
-plt.savefig(os.path.join(binding_plots_folder, 'bind_teoexp_dif_3D_per_nucleon.png'))
+plt.savefig(os.path.join(data_processing_plots, 'bind_teoexp_dif_3D_per_nucleon.png'))
 
 
 #Nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
@@ -195,7 +214,7 @@ def calculate_shell_gaps(df, element, axis, type, column, year):
     df.to_csv(f'data/mass{year}_cleaned.csv', sep=';', index=False)
     return df
 
-def plot_shell_gaps(df, gap_col, type, title, filename, binding_plots_folder, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
+def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
     scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=12, vmin=vmin, vmax=vmax)
@@ -214,7 +233,7 @@ def plot_shell_gaps(df, gap_col, type, title, filename, binding_plots_folder, vm
     plt.xlabel('N')
     plt.ylabel('Z')
     plt.title("{} {}".format(title, type))
-    plt.savefig(os.path.join(binding_plots_folder, filename))
+    plt.savefig(os.path.join(data_processing_plots, filename))
 
 df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'exp', 'bind_ene_total', 2016) 
 df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'exp', 'bind_ene_total', 2016) 
@@ -229,12 +248,12 @@ max_value = max(df2016['delta_2n_exp'].max(), df2016['delta_2p_exp'].max(),
 xlim = (min(df2016['N'].min(), 0), max(df2016['N'].max() + 10, 0)) #Same limits for both plots
 ylim = (0, df2016['Z'].max() + 10)  
 
-plot_shell_gaps(df2016, 'delta_2n', 'exp', 'Neutron shell gaps', 'neutron_shell_gaps_exp.png', binding_plots_folder,
+plot_shell_gaps(df2016, 'delta_2n', 'exp', 'Neutron shell gaps', 'neutron_shell_gaps_exp.png', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2p', 'exp', 'Proton shell gaps', 'proton_shell_gaps_exp.png', binding_plots_folder,
+plot_shell_gaps(df2016, 'delta_2p', 'exp', 'Proton shell gaps', 'proton_shell_gaps_exp.png', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2n', 'teo', 'Neutron shell gaps', 'neutron_shell_gaps_teo.png', binding_plots_folder,
+plot_shell_gaps(df2016, 'delta_2n', 'teo', 'Neutron shell gaps', 'neutron_shell_gaps_teo.png', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_gaps_teo.png', binding_plots_folder,
+plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_gaps_teo.png', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
                     
