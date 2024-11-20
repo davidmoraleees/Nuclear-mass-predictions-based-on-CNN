@@ -184,11 +184,12 @@ def plot_differences(data, inputs, targets, indices, model, device, title, file_
     if 'color_limits' not in color_limits_storage:
         vmin = scatter_data['diff'].min()
         vmax = scatter_data['diff'].max()
-        color_limits_storage['color_limits'] = (vmin, vmax)
+        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+        color_limits_storage['color_limits'] = (vmin, vcenter, vmax)
     else:
-        vmin, vmax = color_limits_storage['color_limits']
+        vmin, vcenter, vmax = color_limits_storage['color_limits']
 
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
@@ -203,6 +204,7 @@ def plot_differences(data, inputs, targets, indices, model, device, title, file_
     plt.ylabel('Z')
     plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
     plt.savefig(file_name)
+    plt.close()
     return
 
 
@@ -215,12 +217,12 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy().flatten()
-        outputs = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - outputs
-        outputs = outputs - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices]
+        outputs = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - outputs # Calculating atomic masses
+        outputs = outputs - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices] # Calculating nuclear masses
 
         targets_np = targets.cpu().numpy().flatten()
-        targets_np = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - targets_np
-        targets_np = targets_np - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices]
+        targets_np = data['Z'].iloc[indices]*m_H + data['N'].iloc[indices]*m_n - targets_np # Calculating atomic masses
+        targets_np = targets_np - data['Z'].iloc[indices]*m_e + data['B_e'].iloc[indices] # Calculating nuclear masses
 
         diff = targets_np - outputs
 
@@ -233,12 +235,13 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
 
     if 'color_limits' not in color_limits_storage:
         vmin = scatter_data['diff'].min()
+        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
         vmax = scatter_data['diff'].max()
-        color_limits_storage['color_limits'] = (vmin, vmax)
+        color_limits_storage['color_limits'] = (vmin, vcenter, vmax)
     else:
-        vmin, vmax = color_limits_storage['color_limits']
+        vmin, vcenter, vmax = color_limits_storage['color_limits']
 
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
@@ -253,6 +256,7 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
     plt.ylabel('Z')
     plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
     plt.savefig(file_name)
+    plt.close()
     return
 
 
@@ -273,6 +277,7 @@ plt.ylim(0, max_value)
 plt.legend()
 plt.grid()
 plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
+plt.close()
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
@@ -312,6 +317,7 @@ for lr in learning_rates:
     plt.legend()
     plt.grid()
     plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
+    plt.close()
     
     color_limits_storage = {}
     plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,

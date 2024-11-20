@@ -144,6 +144,7 @@ def plot_data(df, df_column, title, colorbar_label, filename, folder, cmap, vmin
     plt.ylabel('Z') 
     plt.title(title)
     plt.savefig(os.path.join(folder, filename))
+    plt.close()
 
 
 #Plot of the theoretical binding energy per nucleon as a function of Z and N
@@ -202,6 +203,7 @@ plt.title('3D Difference exp-teo binding energy per nucleon AME2016 ')
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('(MeV)')
 plt.savefig(os.path.join(data_processing_plots, 'bind_teoexp_dif_3D_per_nucleon.png'))
+plt.close()
 
 
 #Nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
@@ -234,6 +236,7 @@ def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, v
     plt.ylabel('Z')
     plt.title("{} {}".format(title, type))
     plt.savefig(os.path.join(data_processing_plots, filename))
+    plt.close()
 
 df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'exp', 'bind_ene_total', 2016) 
 df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'exp', 'bind_ene_total', 2016) 
