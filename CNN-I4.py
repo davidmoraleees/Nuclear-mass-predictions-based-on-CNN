@@ -8,17 +8,21 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+import yaml
+
+with open('config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Training on:', device)
 
-csv_file = 'data/mass2016_cleaned.csv'  
+csv_file = config['data']['csv_file'] 
 data = pd.read_csv(csv_file, delimiter=';')
-data_feature = 'bind_ene_total'
-num_epochs = 100000
-patience = 3000
-learning_rate = 0.002
-optimizer_name = 'Adamax'
+data_feature = config['data']['data_feature']
+num_epochs = config['training']['num_epochs']
+patience = config['training']['patience']
+learning_rate = config['training']['learning_rate']
+optimizer_name = config['training']['optimizer_name']
 
 
 def create_5x5_neighborhood(data, idx, data_feature):
@@ -74,14 +78,17 @@ targets_tensor = torch.tensor(np.array(targets), dtype=torch.float32).view(-1, 1
 
 indices = np.arange(len(data)) #Original indices in the Dataframe
 train_inputs, test_inputs, train_targets, test_targets, train_indices, test_indices = train_test_split(
-    inputs_tensor,targets_tensor, indices, test_size=0.3, shuffle=True, random_state=42)
+    inputs_tensor,targets_tensor, indices, test_size=config['data']['test_size'], shuffle=True,
+    random_state=config['general']['random_state'])
 
 
 class CNN_I4(nn.Module):
     def __init__(self):
         super(CNN_I4, self).__init__() #We initialize the nn.Module class
-        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=1, padding=1) #Basic features
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1) #More complex features
+        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=config['model']['conv1']['kernel_size'],
+                               stride=config['model']['conv1']['stride'], padding=config['model']['conv1']['padding']) #Basic features
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=config['model']['conv2']['kernel_size'],
+                               stride=config['model']['conv2']['stride'], padding=config['model']['conv2']['padding']) #More complex features
         self.fc = nn.Linear(32 * 5 * 5, 1) #Number of input features=32*5*5=800. Output features=1.
         self.relu = nn.ReLU()
 
@@ -105,10 +112,10 @@ def save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
 
 def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
     if best_model_state is not None:
-        model.load_state_dict(best_model_state)
+        model.load_state_dict(best_model_state, map_location=device)
         print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
     else:
-        model.load_state_dict(torch.load(f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs.pt'))
+        model.load_state_dict(torch.load(f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs.pt', map_location=device))
         print('Best model not found. Loading last model')
     return
 
@@ -235,8 +242,8 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
 
     if 'color_limits' not in color_limits_storage:
         vmin = scatter_data['diff'].min()
-        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
         vmax = scatter_data['diff'].max()
+        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
         color_limits_storage['color_limits'] = (vmin, vcenter, vmax)
     else:
         vmin, vcenter, vmax = color_limits_storage['color_limits']
@@ -289,8 +296,16 @@ plot_differences(data, train_inputs, train_targets, train_indices, model, device
 plot_differences(data, test_inputs, test_targets, test_indices, model, device,
                 'Difference exp-predicted (test set)', 'CNN-I4 results/CNN-I4_diff_scatter_test.png', best_test_rmse)
 
+# Now we convert total binding energy predictions into nuclear mass predictions
+color_limits_storage = {}
 plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                'Difference exp-predicted (all data) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (all data) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
+
+plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
+                                'Difference exp-predicted (training set) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_train_nuclear_masses.png', best_test_rmse)
+
+plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
+                                'Difference exp-predicted (test set) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_test_nuclear_masses.png', best_test_rmse)
 
 
 # Learning rates study
@@ -316,7 +331,7 @@ for lr in learning_rates:
     plt.ylim(0, max_value) 
     plt.legend()
     plt.grid()
-    plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
+    plt.savefig(os.path.join(output_folder, f'CNN-I4_evolution_lr_{lr}.png'))
     plt.close()
     
     color_limits_storage = {}
@@ -334,8 +349,8 @@ for lr in learning_rates:
     
 
 # K-folding
-n_splits = 5
-kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+n_splits = config['kfolding']['n_splits']
+kf = KFold(n_splits=n_splits, shuffle=True, random_state=config['general']['random_state'])
 
 rmse_train_list = []
 rmse_test_list = []

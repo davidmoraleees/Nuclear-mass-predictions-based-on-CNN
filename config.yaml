@@ -1,0 +1,26 @@
+data:
+  csv_file: 'data/mass2016_cleaned.csv'
+  data_feature: 'bind_ene_total'
+  test_size: 0.3
+
+training:
+  optimizer_name: Adamax
+  num_epochs: 5000
+  learning_rate: 0.002
+  patience: 3000
+
+general:
+  random_state: 42
+
+model:
+  conv1:
+    kernel_size: 3
+    stride: 1
+    padding: 1
+  conv2:
+    kernel_size: 3
+    stride: 1
+    padding: 1
+
+kfolding:
+  n_splits: 5
