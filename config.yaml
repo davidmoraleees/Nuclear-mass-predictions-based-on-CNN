@@ -5,9 +5,9 @@ data:
 
 training:
   optimizer_name: Adamax
-  num_epochs: 5000
+  num_epochs: 3000000
   learning_rate: 0.002
-  patience: 3000
+  patience: 5000
 
 general:
   random_state: 42
