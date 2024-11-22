@@ -14,7 +14,8 @@ with open('data/WS4.txt', 'r') as file:
     data = [line.strip() for line in file]
 
 data_rows = [line.split() for line in data]
-dfWS4= pd.DataFrame(data_rows, columns=header)  
+dfWS4= pd.DataFrame(data_rows, columns=header)
+dfWS4['N'] = dfWS4['A,'].astype(int) - dfWS4['Z,'].astype(int) 
 dfWS4.to_csv('data/WS4_cleaned.csv', index=False, header=True, sep=';')
 
 
@@ -95,23 +96,20 @@ df2020 = process_file('data/mass2020.txt', header_2020, widths_2020, columns_202
 df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
 
 
-rmse_2016_bind_ene = np.sqrt(np.mean(df2016['Diff_bind_ene'] ** 2))
-print('RMSE liquid droplet model (2016) binding energy per nucleon: ', rmse_2016_bind_ene, 'MeV')
+def calculate_rmse(df, metrics):
+    for metric in metrics:
+        rmse = np.sqrt(np.mean(df[metric['column']] ** 2))
+        print(f"{metric['label']}: {rmse} {metric['unit']}")
 
-rmse_2016_bind_ene_total = np.sqrt(np.mean(df2016['Diff_bind_ene_total'] ** 2))
-print('RMSE liquid droplet model (2016) binding energy: ', rmse_2016_bind_ene_total, 'MeV')
+metrics = [
+    {'column': 'Diff_bind_ene', 'label': 'RMSE liquid droplet model (2016) binding energy per nucleon', 'unit': 'MeV'},
+    {'column': 'Diff_bind_ene_total', 'label': 'RMSE liquid droplet model (2016) binding energy', 'unit': 'MeV'},
+    {'column': 'Diff_atomic_mass', 'label': 'RMSE between atomic masses in AME2016 and calculated ones', 'unit': 'MeV'},
+    {'column': 'Diff_mass_excess', 'label': 'RMSE between mass excess from AME and calculated ones', 'unit': 'keV'},
+    {'column': 'Diff_bind_ene_calcs', 'label': 'RMSE between binding energies per nucleon in AME2016 and calculated ones', 'unit': 'MeV'},
+    {'column': 'Diff_nuclear_mass', 'label': 'RMSE liquid droplet model (2016) nuclear masses', 'unit': 'MeV'},]
 
-rmse_2016_atomic_mass = np.sqrt(np.mean(df2016['Diff_atomic_mass'] ** 2))
-print('RMSE between atomic masses in AME2016 and calculated ones:', rmse_2016_atomic_mass, 'MeV')
-
-rmse_2016_mass_exc = np.sqrt(np.mean(df2016['Diff_mass_excess'] ** 2))
-print('RMSE between mass excess from AME and calculated ones: ', rmse_2016_mass_exc, 'keV')
-
-rmse_2016_bind_enes = np.sqrt(np.mean(df2016['Diff_bind_ene_calcs'] ** 2))
-print('RMSE between binding energies per nucleon in AME2016 and calculated ones:', rmse_2016_bind_enes, 'MeV')
-
-rmse_2016_nuclear_mass = np.sqrt(np.mean(df2016['Diff_nuclear_mass'] ** 2))
-print('RMSE liquid droplet model (2016) nuclear masses: ', rmse_2016_nuclear_mass, 'MeV')
+calculate_rmse(df2016, metrics)
 
 
 data_processing_plots = 'Data processing plots' #Plots folder of AME2016 dataset
@@ -260,3 +258,8 @@ plot_shell_gaps(df2016, 'delta_2n', 'teo', 'Neutron shell gaps', 'neutron_shell_
 plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_gaps_teo.png', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
                     
+
+df_new_nuclei = df2020.merge(df2016, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+df_new_nuclei = df_new_nuclei[df_new_nuclei['_merge'] == 'left_only'].drop(columns=['_merge'])
+df_new_nuclei = df_new_nuclei.dropna(axis=1, how='all')
+df_new_nuclei.to_csv('data/new_nuclei.csv', index=False, sep=';')
