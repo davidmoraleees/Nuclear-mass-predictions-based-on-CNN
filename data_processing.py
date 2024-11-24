@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 
+uma = 931.49410372
+m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
+m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
+
 # Extracting data from WS4 file
 with open('data/WS4.txt', 'r') as file:
     for i in range(29):
@@ -15,7 +19,16 @@ with open('data/WS4.txt', 'r') as file:
 
 data_rows = [line.split() for line in data]
 dfWS4= pd.DataFrame(data_rows, columns=header)
-dfWS4['N'] = dfWS4['A,'].astype(int) - dfWS4['Z,'].astype(int) 
+dfWS4['N'] = dfWS4['A,'].astype(int) - dfWS4['Z,'].astype(int)
+dfWS4 = dfWS4[(dfWS4['N'] >= 8) & (dfWS4['N'] < 180) & (dfWS4['Z,'].astype(int) >= 8) & (dfWS4['Z,'].astype(int) < 120)]
+dfWS4['Mth_MeV'] = dfWS4['Mth']
+dfWS4['Mth'] = dfWS4['Mth'].astype(float)/uma # u
+dfWS4['atomic_mass_ws4'] = dfWS4['Mth'] + dfWS4['A,'].astype(int) # u
+dfWS4['atomic_mass_ws4'] = dfWS4['atomic_mass_ws4']*uma # MeV
+dfWS4['bind_ene_total_ws4'] = (dfWS4['Z,'].astype(int)*m_H + dfWS4['N']*m_n) - dfWS4['atomic_mass_ws4'] # MeV
+dfWS4['Z'] = dfWS4['Z,']
+dfWS4['A'] = dfWS4['A,']
+dfWS4[['A', 'Z', 'N']] = dfWS4[['A', 'Z', 'N']].astype(int)
 dfWS4.to_csv('data/WS4_cleaned.csv', index=False, header=True, sep=';')
 
 
@@ -94,6 +107,13 @@ header_2016 = 31
 
 df2020 = process_file('data/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, False)
 df2016 = process_file('data/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
+
+
+df2016[['A', 'Z', 'N']] = df2016[['A', 'Z', 'N']].astype(int)
+df2020[['A', 'Z', 'N']] = df2020[['A', 'Z', 'N']].astype(int)
+df_merged = pd.merge(df2016, dfWS4[['A', 'Z', 'N', 'bind_ene_total_ws4']], on=['A', 'Z', 'N'], how='left')
+df_merged['Diff_bind_ene_ws4'] = df_merged['bind_ene_total'] - df_merged['bind_ene_total_ws4']
+df_merged.to_csv('Data/mass2016_with_ws4.csv', sep=';', index=False)
 
 
 def calculate_rmse(df, metrics):
