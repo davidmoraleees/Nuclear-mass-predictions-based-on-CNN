@@ -23,6 +23,8 @@ num_epochs = config['training']['num_epochs']
 patience = config['training']['patience']
 learning_rate = config['training']['learning_rate']
 optimizer_name = config['training']['optimizer_name']
+I4_results_folder = 'CNN-I4 results'
+output_folder = 'CNN-I4 experiments learning rates'
 
 
 def create_5x5_neighborhood(data, idx, data_feature):
@@ -104,10 +106,10 @@ def save_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs, 
     lr_value = lr_name if lr_name is not None else ''
 
     if best_model_state is not None:
-            torch.save(best_model_state, f'CNN-I4 results/cnn_i4_best_model_{lr_value}.pt')
+            torch.save(best_model_state, f'{I4_results_folder}/cnn_i4_best_model_{lr_value}.pt')
             print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
     else:
-        torch.save(model.state_dict(), f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs_{lr_value}.pt')
+        torch.save(model.state_dict(), f'{I4_results_folder}/cnn_i4_model_{num_epochs}_epochs_{lr_value}.pt')
         print('Best model not found. Saving last model')
     return
 
@@ -117,7 +119,7 @@ def load_model(model, best_model_state, best_test_rmse, best_epoch, num_epochs):
         model.load_state_dict(best_model_state, map_location=device)
         print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
     else:
-        model.load_state_dict(torch.load(f'CNN-I4 results/cnn_i4_model_{num_epochs}_epochs.pt', map_location=device))
+        model.load_state_dict(torch.load(f'{I4_results_folder}/cnn_i4_model_{num_epochs}_epochs.pt', map_location=device))
         print('Best model not found. Loading last model')
     return
 
@@ -271,8 +273,6 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
 
 # Learning rates study
 learning_rates = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1, 0.5]
-output_folder = 'CNN-I4 experiments learning rates'
-os.makedirs(output_folder, exist_ok=True)
 
 for lr in learning_rates:
     print(f"\nTraining with learning rate: {lr}")
@@ -311,13 +311,13 @@ for lr in learning_rates:
     # Now we convert total binding energy predictions into nuclear mass predictions
     color_limits_storage = {}
     plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                                    'Difference exp-predicted (all data) nuclear masses', f'CNN-I4 results/CNN-I4_diff_scatter_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    'Difference exp-predicted (all data) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_nuclear_masses_lr_{lr}.png', best_test_rmse)
 
     plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
-                                    'Difference exp-predicted (training set) nuclear masses', f'CNN-I4 results/CNN-I4_diff_scatter_train_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    'Difference exp-predicted (training set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_train_nuclear_masses_lr_{lr}.png', best_test_rmse)
 
     plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
-                                    'Difference exp-predicted (test set) nuclear masses', f'CNN-I4 results/CNN-I4_diff_scatter_test_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    'Difference exp-predicted (test set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_test_nuclear_masses_lr_{lr}.png', best_test_rmse)
 
     
 # One training of the model
@@ -336,29 +336,29 @@ max_value = max(max(train_loss_rmse_values), max(test_loss_rmse_values)) + 1
 plt.ylim(0, max_value) 
 plt.legend()
 plt.grid()
-plt.savefig(f'CNN-I4 results/CNN-I4_evolution.png')
+plt.savefig(f'{I4_results_folder}/CNN-I4_evolution.png')
 plt.close()
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                'Difference exp-predicted (all data)', 'CNN-I4 results/CNN-I4_diff_scatter.png', best_test_rmse)
+                'Difference exp-predicted (all data)', f'{I4_results_folder}/CNN-I4_diff_scatter.png', best_test_rmse)
 
 plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                'Difference exp-predicted (training set)', 'CNN-I4 results/CNN-I4_diff_scatter_train.png', best_test_rmse)
+                'Difference exp-predicted (training set)', f'{I4_results_folder}/CNN-I4_diff_scatter_train.png', best_test_rmse)
 
 plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                'Difference exp-predicted (test set)', 'CNN-I4 results/CNN-I4_diff_scatter_test.png', best_test_rmse)
+                'Difference exp-predicted (test set)', f'{I4_results_folder}/CNN-I4_diff_scatter_test.png', best_test_rmse)
 
 # Now we convert total binding energy predictions into nuclear mass predictions
 color_limits_storage = {}
 plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                                'Difference exp-predicted (all data) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (all data) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
 
 plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
-                                'Difference exp-predicted (training set) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_train_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (training set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_train_nuclear_masses.png', best_test_rmse)
 
 plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
-                                'Difference exp-predicted (test set) nuclear masses', 'CNN-I4 results/CNN-I4_diff_scatter_test_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (test set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_test_nuclear_masses.png', best_test_rmse)
 
 
 # K-folding
