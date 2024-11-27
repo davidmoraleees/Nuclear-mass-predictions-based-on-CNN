@@ -9,6 +9,7 @@ m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
 m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
 data_folder = 'data'
 data_processing_plots = 'Data processing plots' #Plots folder of AME2016 dataset
+remove_hashtags = False
 
 # Extracting data from WS4 file
 with open(f'{data_folder}/WS4.txt', 'r') as file:
@@ -91,7 +92,10 @@ def process_file(filename, header, widths, columns, column_names, year, remove):
     df['M_N_exp'] = df['atomic_mass'] - Z*m_e + df['B_e']  # MeV
     df['Diff_nuclear_mass'] = df['M_N_exp'] - df['M_N_teo']  # MeV
     
-    df.to_csv(f'{data_folder}/mass{year}_cleaned.csv', sep=';', index=False)
+    if remove:
+        df.to_csv(f'{data_folder}/mass{year}_cleaned_without_#.csv', sep=';', index=False)
+    else:
+        df.to_csv(f'{data_folder}/mass{year}_cleaned_with_#.csv', sep=';', index=False)
     return df
 
 columns_2020 = (1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 19, 21, 22)
@@ -107,15 +111,8 @@ column_names_2016 = ['index', 'N-Z', 'N', 'Z', 'A', 'empty', 'Element', 'empty2'
                      'empty6', 'A2', 'empty7', 'atomic_mass', 'atomic_mass_unc']
 header_2016 = 31
 
-df2020 = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, False)
-df2016 = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
-
-
-df2016[['A', 'Z', 'N']] = df2016[['A', 'Z', 'N']].astype(int)
-df2020[['A', 'Z', 'N']] = df2020[['A', 'Z', 'N']].astype(int)
-df_merged = pd.merge(df2016, dfWS4[['A', 'Z', 'N', 'bind_ene_total_ws4']], on=['A', 'Z', 'N'], how='left')
-df_merged['Diff_bind_ene_ws4'] = df_merged['bind_ene_total'] - df_merged['bind_ene_total_ws4']
-df_merged.to_csv(f'{data_folder}/mass2016_with_ws4.csv', sep=';', index=False)
+df2020 = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, remove_hashtags)
+df2016 = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, remove_hashtags)
 
 
 def calculate_rmse(df, metrics):
@@ -223,14 +220,18 @@ plt.close()
 
 
 #Nuclear shell gaps (\Delta_{2n} and \Delta_{2p})
-def calculate_shell_gaps(df, element, axis, type, column, year):
+def calculate_shell_gaps(df, element, axis, type, column, year, remove):
     '''Neutrons--> element = n, axis = Z; Protons--> element = p, axis = N
     type = exp or teo; column = bind_ene_total or bind_ene_teo_total '''
     df[f'bind_ene_{element}+2_{type}'] = df.groupby(axis)[column].shift(-2)
     df[f'bind_ene_{element}-2_{type}'] = df.groupby(axis)[column].shift(2)
     df[f'delta_2{element}_{type}'] = df[f'bind_ene_{element}-2_{type}'] - 2 * df[column] + df[f'bind_ene_{element}+2_{type}']
-    df.to_csv(f'{data_folder}/mass{year}_cleaned.csv', sep=';', index=False)
+    if remove:
+        df.to_csv(f'{data_folder}/mass{year}_cleaned_without_#.csv', sep=';', index=False)
+    else:
+        df.to_csv(f'{data_folder}/mass{year}_cleaned_with_#.csv', sep=';', index=False)
     return df
+
 
 def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
@@ -254,10 +255,10 @@ def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, v
     plt.savefig(os.path.join(data_processing_plots, filename))
     plt.close()
 
-df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'exp', 'bind_ene_total', 2016) 
-df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'exp', 'bind_ene_total', 2016) 
-df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'teo', 'bind_ene_teo_total', 2016) 
-df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'teo', 'bind_ene_teo_total', 2016) 
+df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'exp', 'bind_ene_total', 2016, remove_hashtags) 
+df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'exp', 'bind_ene_total', 2016, remove_hashtags) 
+df2016 = calculate_shell_gaps(df2016, 'n', 'Z', 'teo', 'bind_ene_teo_total', 2016, remove_hashtags) 
+df2016 = calculate_shell_gaps(df2016, 'p', 'N', 'teo', 'bind_ene_teo_total', 2016, remove_hashtags) 
 
 min_value = min(df2016['delta_2n_exp'].min(), df2016['delta_2p_exp'].min(),
                 df2016['delta_2n_teo'].min(), df2016['delta_2p_teo'].min()) #Same colorbar range for both plots
@@ -277,7 +278,39 @@ plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps', 'proton_shell_ga
                 min_value, max_value, xlim=xlim, ylim=ylim)
                     
 
-df_new_nuclei = df2020.merge(df2016, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
-df_new_nuclei = df_new_nuclei[df_new_nuclei['_merge'] == 'left_only'].drop(columns=['_merge'])
-df_new_nuclei = df_new_nuclei.dropna(axis=1, how='all')
-df_new_nuclei.to_csv(f'{data_folder}/new_nuclei.csv', index=False, sep=';')
+df2016[['A', 'Z', 'N']] = df2016[['A', 'Z', 'N']].astype(int)
+df2020[['A', 'Z', 'N']] = df2020[['A', 'Z', 'N']].astype(int)
+df_merged = pd.merge(df2016, dfWS4[['A', 'Z', 'N', 'bind_ene_total_ws4']], on=['A', 'Z', 'N'], how='left')
+df_merged['Diff_bind_ene_ws4'] = df_merged['bind_ene_total'] - df_merged['bind_ene_total_ws4']
+df_merged.to_csv(f'{data_folder}/mass2016_with_ws4.csv', sep=';', index=False)
+
+
+# yes = contains '#';   no = doesn't contain '#'
+df2016_no = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, True)
+df2016_yes = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
+df2020_no = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, True)
+df2020_yes = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, False)
+
+# Difference between AME2016 with '#' and AME2016 without '#'
+df2016_2016_noyes = df2016_yes.merge(df2016_no, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+df2016_2016_noyes = df2016_2016_noyes[df2016_2016_noyes['_merge'] == 'left_only'].drop(columns=['_merge'])
+df2016_2016_noyes = df2016_2016_noyes.dropna(axis=1, how='all')
+df2016_2016_noyes.to_csv(f'{data_folder}/df2016_2016_noyes.csv', index=False, sep=';')
+
+# Difference between AME2020 without '#' and AME2016 without '#'
+df2016_2020_nono = df2020_no.merge(df2016_no, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+df2016_2020_nono = df2016_2020_nono[df2016_2020_nono['_merge'] == 'left_only'].drop(columns=['_merge'])
+df2016_2020_nono = df2016_2020_nono.dropna(axis=1, how='all')
+df2016_2020_nono.to_csv(f'{data_folder}/df2016_2020_nono.csv', index=False, sep=';')
+
+# Difference between AME2020 without '#' and AME2016 with '#'
+df2016_2020_yesno = df2020_no.merge(df2016_yes, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+df2016_2020_yesno = df2016_2020_yesno[df2016_2020_yesno['_merge'] == 'left_only'].drop(columns=['_merge'])
+df2016_2020_yesno = df2016_2020_yesno.dropna(axis=1, how='all')
+df2016_2020_yesno.to_csv(f'{data_folder}/df2016_2020_yesno.csv', index=False, sep=';')
+
+# Difference between AME2020 with '#' and AME2016 with '#'
+df2016_2020_yesyes = df2020_yes.merge(df2016_yes, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+df2016_2020_yesyes = df2016_2020_yesyes[df2016_2020_yesyes['_merge'] == 'left_only'].drop(columns=['_merge'])
+df2016_2020_yesyes = df2016_2020_yesyes.dropna(axis=1, how='all')
+df2016_2020_yesyes.to_csv(f'{data_folder}/df2016_2020_yesyes.csv', index=False, sep=';')
