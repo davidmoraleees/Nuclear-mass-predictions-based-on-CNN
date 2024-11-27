@@ -285,32 +285,23 @@ df_merged['Diff_bind_ene_ws4'] = df_merged['bind_ene_total'] - df_merged['bind_e
 df_merged.to_csv(f'{data_folder}/mass2016_with_ws4.csv', sep=';', index=False)
 
 
+def calculate_difference(df1, df2, output_file):
+    diff = df1.merge(df2, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
+    diff = diff[diff['_merge'] == 'left_only'].drop(columns=['_merge'])
+    diff = diff.dropna(axis=1, how='all')
+    diff.to_csv(output_file, index=False, sep=';')
+
 # yes = contains '#';   no = doesn't contain '#'
 df2016_no = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, True)
 df2016_yes = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, False)
 df2020_no = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, True)
 df2020_yes = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, False)
 
-# Difference between AME2016 with '#' and AME2016 without '#'
-df2016_2016_noyes = df2016_yes.merge(df2016_no, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
-df2016_2016_noyes = df2016_2016_noyes[df2016_2016_noyes['_merge'] == 'left_only'].drop(columns=['_merge'])
-df2016_2016_noyes = df2016_2016_noyes.dropna(axis=1, how='all')
-df2016_2016_noyes.to_csv(f'{data_folder}/df2016_2016_noyes.csv', index=False, sep=';')
+scenarios = [(df2016_yes, df2016_no, f'{data_folder}/df2016_2016_noyes.csv'), 
+             (df2020_no, df2016_no, f'{data_folder}/df2016_2020_nono.csv'),    
+             (df2020_no, df2016_yes, f'{data_folder}/df2016_2020_yesno.csv'), 
+             (df2020_yes, df2016_yes, f'{data_folder}/df2016_2020_yesyes.csv')]
 
-# Difference between AME2020 without '#' and AME2016 without '#'
-df2016_2020_nono = df2020_no.merge(df2016_no, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
-df2016_2020_nono = df2016_2020_nono[df2016_2020_nono['_merge'] == 'left_only'].drop(columns=['_merge'])
-df2016_2020_nono = df2016_2020_nono.dropna(axis=1, how='all')
-df2016_2020_nono.to_csv(f'{data_folder}/df2016_2020_nono.csv', index=False, sep=';')
+for df1, df2, output_file in scenarios:
+    calculate_difference(df1, df2, output_file)
 
-# Difference between AME2020 without '#' and AME2016 with '#'
-df2016_2020_yesno = df2020_no.merge(df2016_yes, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
-df2016_2020_yesno = df2016_2020_yesno[df2016_2020_yesno['_merge'] == 'left_only'].drop(columns=['_merge'])
-df2016_2020_yesno = df2016_2020_yesno.dropna(axis=1, how='all')
-df2016_2020_yesno.to_csv(f'{data_folder}/df2016_2020_yesno.csv', index=False, sep=';')
-
-# Difference between AME2020 with '#' and AME2016 with '#'
-df2016_2020_yesyes = df2020_yes.merge(df2016_yes, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))
-df2016_2020_yesyes = df2016_2020_yesyes[df2016_2020_yesyes['_merge'] == 'left_only'].drop(columns=['_merge'])
-df2016_2020_yesyes = df2016_2020_yesyes.dropna(axis=1, how='all')
-df2016_2020_yesyes.to_csv(f'{data_folder}/df2016_2020_yesyes.csv', index=False, sep=';')
