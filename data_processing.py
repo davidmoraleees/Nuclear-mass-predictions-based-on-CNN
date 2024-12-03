@@ -2,14 +2,24 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import yaml
 from matplotlib.colors import TwoSlopeNorm
 
-uma = 931.49410372
-m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
-m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
+with open('config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
+
+uma = config['LDM']['uma']
+m_n =  config['LDM']['m_n']*(10**-6)*uma 
+m_H =  config['LDM']['m_H']*(10**-6)*uma 
+m_e = config['LDM']['m_e']
+av = config['LDM']['av']
+aS = config['LDM']['aS']
+ac = config['LDM']['ac']
+aA = config['LDM']['aA']
+ap = config['LDM']['ap']
+remove_hashtags = config['data']['remove_hashtags']
 data_folder = 'data'
 data_processing_plots = 'Data processing plots' #Plots folder of AME2016 dataset
-remove_hashtags = False
 
 # Extracting data from WS4 file
 with open(f'{data_folder}/WS4.txt', 'r') as file:
@@ -58,12 +68,6 @@ def process_file(filename, header, widths, columns, column_names, year, remove):
     df['delta_I4'] = ((-1)**df['N'] + (-1)**df['Z']) // 2
 
     A, Z, N, delta = df['A'], df['Z'], df['N'], df['delta']
-    
-    av, aS, ac, aA, ap = 15.56, 17.23, 0.697, 23.285, 12  # MeV
-    uma = 931.49410372
-    m_e = 0.51099895069
-    m_n =  1008664.91582*(10**-6)*uma # This equals to 939.56542171556 MeV
-    m_H =  1007825.03224*(10**-6)*uma # This equals to 938.7830751129788 MeV
 
     df['bind_ene'] = df['bind_ene'].astype(float) / 1000  # MeV
     df['bind_ene_total'] = df['bind_ene'] * A  # MeV

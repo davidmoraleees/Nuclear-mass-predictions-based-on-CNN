@@ -153,9 +153,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 csv_file = "data/mass2020_cleaned_with_#.csv"
 new_nuclei_file = "data/df2016_2020_yesyes.csv"  
 model_path = "Tests new nuclei/cnn_i3_best_model_0.001.pt"  
-data_feature = "bind_ene_total"  
+data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
+new_nuclei = pd.read_csv(new_nuclei_file, delimiter=';')
 
 model = CNN_I3().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
@@ -180,11 +181,73 @@ rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
 print(f"RMSE global I3: {rmse_global:.4f} MeV")
 
 data['bind_ene_total_'] = data['bind_ene_total']
-data['prediction'] = predictions
-data['difference'] = real_values - predictions
+data['prediction_i3'] = predictions
+data['difference_i3'] = real_values - predictions
 data.to_csv(csv_file, index=False, sep=';')
 
-output_file = "Tests new nuclei/differences_plot_i3.png"
+output_file = "Tests new nuclei/differences_plot_i3_all_nuclei.png"
 plot_differences(data, real_values, predictions, 
+                 title="Difference between real values and predicted ones",
+                 file_name=output_file)
+
+new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
+new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
+
+real_values_new = real_values[new_nuclei_indices]
+predictions_new = predictions[new_nuclei_indices]
+
+rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
+print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
+
+output_file = "Tests new nuclei/differences_plot_i3_new_nuclei.png"
+plot_differences(new_nuclei, real_values_new, predictions_new, 
+                 title="Difference between real values and predicted ones",
+                 file_name=output_file)
+
+
+model_path = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"   
+model = CNN_I4().to(device)
+model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+model.eval()
+
+real_values = []
+predictions = []
+
+for idx in range(len(data)):
+    z_grid, n_grid, delta_I4_grid, data_feature_grid = create_5x5_neighborhood_i4(data, idx, data_feature)
+    input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, delta_I4_grid, data_feature_grid])]), dtype=torch.float32).to(device)
+    real_value = data.iloc[idx][data_feature]
+    with torch.no_grad():
+        predicted_value = model(input_tensor).item()
+    real_values.append(real_value)
+    predictions.append(predicted_value)
+
+real_values = np.array(real_values)
+predictions = np.array(predictions)
+rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
+
+print(f"RMSE global I4: {rmse_global:.4f} MeV")
+
+data['bind_ene_total_'] = data['bind_ene_total']
+data['prediction_i4'] = predictions
+data['difference_i4'] = real_values - predictions
+data.to_csv(csv_file, index=False, sep=';')
+
+output_file = "Tests new nuclei/differences_plot_i4_all_nuclei.png"
+plot_differences(data, real_values, predictions, 
+                 title="Difference between real values and predicted ones",
+                 file_name=output_file)
+
+new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
+new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
+
+real_values_new = real_values[new_nuclei_indices]
+predictions_new = predictions[new_nuclei_indices]
+
+rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
+print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
+
+output_file = "Tests new nuclei/differences_plot_i4_new_nuclei.png"
+plot_differences(new_nuclei, real_values_new, predictions_new, 
                  title="Difference between real values and predicted ones",
                  file_name=output_file)

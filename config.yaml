@@ -1,12 +1,24 @@
+LDM:
+  uma: 931.49410372 # 1u = 931.49410372 MeV
+  m_n: 1008664.91582 # micro-u
+  m_H: 1007825.03224 # micro-u
+  m_e: 0.51099895069 # MeV
+  av: 15.56 # MeV
+  aS: 17.23 # MeV
+  ac: 0.697 # MeV
+  aA: 23.285 # MeV
+  ap: 12 # MeV
+
 data:
-  csv_file: 'data/mass2016_cleaned.csv'
+  csv_file: 'data/mass2016_cleaned_with_#.csv'
   data_feature: 'bind_ene_total'
   test_size: 0.3
+  remove_hashtags: False
 
 training:
   optimizer_name: Adamax
-  num_epochs: 1000 # It has to be greater than plot_skipping_epochs
-  plot_skipping_epochs: 500
+  num_epochs: 3000000 # It has to be greater than plot_skipping_epochs
+  plot_skipping_epochs: 2000
   learning_rate: 0.002
   patience: 5000
 
