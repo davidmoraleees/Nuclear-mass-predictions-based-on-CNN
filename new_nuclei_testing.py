@@ -5,116 +5,11 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
+from models import CNN_I3, CNN_I4
+from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
-
-class CNN_I3(nn.Module):
-    def __init__(self):
-        super(CNN_I3, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=config['model']['conv1']['kernel_size'],
-                               stride=config['model']['conv1']['stride'], padding=config['model']['conv1']['padding'])
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=config['model']['conv2']['kernel_size'],
-                               stride=config['model']['conv2']['stride'], padding=config['model']['conv2']['padding'])
-        self.fc = nn.Linear(32 * 5 * 5, 1)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
-    
-class CNN_I4(nn.Module):
-    def __init__(self):
-        super(CNN_I4, self).__init__() #We initialize the nn.Module class
-        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=config['model']['conv1']['kernel_size'],
-                                stride=config['model']['conv1']['stride'], padding=config['model']['conv1']['padding']) #Basic features
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=config['model']['conv2']['kernel_size'],
-                                stride=config['model']['conv2']['stride'], padding=config['model']['conv2']['padding']) #More complex features
-        self.fc = nn.Linear(32 * 5 * 5, 1) #Number of input features=32*5*5=800. Output features=1.
-        self.relu = nn.ReLU()
-
-    def forward(self, x): #'x' is the input
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x)) #We have a 4D tensor: (batch size, channels, height, width).
-        x = x.view(x.size(0), -1) #The fc requires a 2D tensor: (batch size, features). batch_size=x.size(0)
-        x = self.fc(x)
-        return x
-
-def create_5x5_neighborhood_i3(data, idx, data_feature):
-    current_n = data.iloc[idx]['N']
-    current_z = data.iloc[idx]['Z']
-    
-    z_grid = np.zeros((5, 5))
-    n_grid = np.zeros((5, 5))
-    data_feature_grid = np.zeros((5, 5))
-    data_feature_list = []
-    
-    for i in range(-2, 3):
-        for j in range(-2, 3):
-            neighbor_n = current_n + i
-            neighbor_z = current_z + j
-            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index
-            
-            z_grid[i+2, j+2] = neighbor_z
-            n_grid[i+2, j+2] = neighbor_n  
-
-            if len(neighbor_idx) > 0:
-                data_feature_value = data.iloc[neighbor_idx[0]][data_feature]
-                data_feature_grid[i + 2, j + 2] = data_feature_value
-                data_feature_list.append(data_feature_value)
-            else:
-                data_feature_grid[i + 2, j + 2] = np.nan 
-
-    if data_feature_list:
-        neighborhood_mean = np.mean(data_feature_list)
-    else:
-        neighborhood_mean = 0
-
-    data_feature_grid[np.isnan(data_feature_grid)] = neighborhood_mean
-    data_feature_grid[2, 2] = 0
-    return z_grid, n_grid, data_feature_grid
-
-def create_5x5_neighborhood_i4(data, idx, data_feature):
-    current_n = data.iloc[idx]['N'] #Data for the target nucleus. 'idx'=row and 'N'=column
-    current_z = data.iloc[idx]['Z']
-    
-    z_grid = np.zeros((5, 5))
-    n_grid = np.zeros((5, 5))
-    delta_I4_grid = np.zeros((5, 5))
-    data_feature_grid = np.zeros((5, 5))
-    data_feature_list = []
-    
-    for i in range(-2, 3): #The neighbourhood is defined from -2 to 2, 0 being the central value
-        for j in range(-2, 3):
-            neighbor_n = current_n + i #Data of the neighbours of the target nucleus.
-            neighbor_z = current_z + j
-            neighbor_idx = data[(data['N'] == neighbor_n) & (data['Z'] == neighbor_z)].index #row index of the neighbour
-                                                                                             #that has 'neighbor_n' and 'neighbor_z' 
-            z_grid[i+2, j+2] = neighbor_z #We add +2 because matrices start at [0,0] (top left corner)
-            n_grid[i+2, j+2] = neighbor_n  
-
-            if len(neighbor_idx) > 0: #Verify if any index has been found
-                data_feature_value = data.iloc[neighbor_idx[0]][data_feature]
-                data_feature_grid[i + 2, j + 2] = data_feature_value
-                data_feature_list.append(data_feature_value)
-                delta_I4_value = data.iloc[neighbor_idx[0]]['delta_I4']
-                delta_I4_grid[i + 2, j + 2] = delta_I4_value  
-            else:
-                data_feature_grid[i + 2, j + 2] = np.nan 
-
-    if data_feature_list:
-        neighborhood_mean = np.mean(data_feature_list)
-    else:
-        print('Warning: data feature list is empty. Proceeding with neighborhood_mean = 0')
-        neighborhood_mean = 0
-
-    data_feature_grid[np.isnan(data_feature_grid)] = neighborhood_mean
-    data_feature_grid[2, 2] = 0 #Target nucleus assigned to zero
-    return z_grid, n_grid, delta_I4_grid, data_feature_grid
-
 
 def plot_differences(data, real_values, predictions, title, file_name):
     diff = real_values - predictions
@@ -184,9 +79,6 @@ new_nuclei = pd.read_csv(new_nuclei_file, delimiter=';')
 
 
 # Evaluation of specific nuclei
-model = CNN_I3().to(device)
-model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
-
 z_value = 109
 n_range = range(156, 174)  # Mt isotopic chain
 nuclei_to_evaluate = [(n_value, z_value) for n_value in n_range]
@@ -256,8 +148,11 @@ plt.tight_layout()
 plt.savefig("Tests new nuclei/difference_vs_N_plot.png")
 plt.close()
 
+print('Succeeded in evaulating specific nuclei.')
 
 # Evaluations of the CNN-I3 model on the whole dataset
+model = CNN_I3().to(device)
+model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 model.eval()
 
 real_values = []
