@@ -174,3 +174,60 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
     plt.savefig(file_name)
     plt.close()
     return
+
+
+def evaluate_single_nucleus(data, model, n_value, z_value, data_feature, neighborhood_function):
+    nucleus_idx = data[(data['N'] == n_value) & (data['Z'] == z_value)].index
+    if len(nucleus_idx) == 0:
+        raise ValueError(f"Nucleus with N={n_value} and Z={z_value} not found.")
+    
+    nucleus_idx = nucleus_idx[0]  # If there's more than one, we take the first.
+    neighborhood = neighborhood_function(data, nucleus_idx, data_feature)
+    
+    if neighborhood_function == create_5x5_neighborhood_i3:
+        z_grid, n_grid, data_feature_grid = neighborhood
+        input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, data_feature_grid])]), dtype=torch.float32).to(device)
+    elif neighborhood_function == create_5x5_neighborhood_i4:
+        z_grid, n_grid, delta_I4_grid, data_feature_grid = neighborhood
+        input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, delta_I4_grid, data_feature_grid])]), dtype=torch.float32).to(device)
+    else:
+        raise ValueError("Error: neighborhood_function not recognized.")
+    
+    real_value = data.iloc[nucleus_idx][data_feature]
+    model.eval()
+    with torch.no_grad():
+        predicted_value = model(input_tensor).item()
+    difference = real_value - predicted_value
+    
+    return real_value, predicted_value, difference
+
+
+def plot_differences_new(data, real_values, predictions, title, file_name):
+    diff = real_values - predictions
+    scatter_data = pd.DataFrame({
+        'N': data['N'],
+        'Z': data['Z'],
+        'diff': diff
+    })
+    plt.figure(figsize=(10, 6))
+    vmin = scatter_data['diff'].min()
+    vmax = scatter_data['diff'].max()
+    vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+    scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
+                          cmap='seismic', norm=norm, edgecolor='None', s=12)
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('(MeV)')
+    magic_numbers = [8, 20, 28, 50, 82, 126]
+    for magic in magic_numbers:
+        plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+        plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+    plt.xticks(magic_numbers)
+    plt.yticks(magic_numbers)
+    plt.xlabel('N')
+    plt.ylabel('Z')
+    rmse = np.sqrt(np.mean(diff**2))
+    plt.title(f"{title}  RMSE: {rmse:.3f} MeV")
+    plt.savefig(file_name)
+    plt.close()
+    return
