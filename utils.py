@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import yaml
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
@@ -214,7 +216,7 @@ def plot_differences_new(data, real_values, predictions, title, file_name):
     vmax = scatter_data['diff'].max()
     vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
     norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-    scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff'],
+    scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff']*(-1),
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
     cbar.set_label('(MeV)')

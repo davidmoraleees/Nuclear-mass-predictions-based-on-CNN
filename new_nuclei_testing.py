@@ -79,7 +79,8 @@ plt.axvspan(155.5, 170.5, color='gray', alpha=0.3)
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["N"], model_data["Difference (MeV)"], marker="o", label=model_name, color=colors[model_name])
+    plt.plot(model_data["N"], model_data["Difference (MeV)"]*(-1), marker="o", label=model_name, color=colors[model_name])
+# We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
 
 plt.axhline(0, color='black', linewidth=2, linestyle='--')
 plt.title('Nuclear mass differences in Mt isotopic chain')
@@ -152,7 +153,7 @@ plt.axvspan(112.5, 117.5, color='gray', alpha=0.3)
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["Z"], model_data["Difference (MeV)"], marker="o", label=model_name, color=colors[model_name])
+    plt.plot(model_data["Z"], model_data["Difference (MeV)"]*(-1), marker="o", label=model_name, color=colors[model_name])
 
 plt.axhline(0, color='black', linewidth=2, linestyle='--')
 plt.title('Nuclear mass differences in N=174 isotonic chain')
