@@ -1,17 +1,15 @@
 import os
 import pandas as pd
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 import yaml
 from models import CNN_I4
 from utils import create_5x5_neighborhood_i4
 from utils import plot_differences, plot_differences_nuclear_masses
+from utils import train_model
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -29,6 +27,8 @@ optimizer_name = config['training']['optimizer_name']
 plot_skipping_epochs = config['training']['plot_skipping_epochs']
 I4_results_folder = 'CNN-I4 results'
 I4_lr_folder = 'CNN-I4 experiments learning rates'
+model_name = 'I4'
+
 
 inputs = [] #3x5x5 matrices of inputs
 targets = [] #Binding energies of the target nucleus
@@ -48,92 +48,15 @@ train_inputs, test_inputs, train_targets, test_targets, train_indices, test_indi
     inputs_tensor,targets_tensor, indices, test_size=config['data']['test_size'], shuffle=True,
     random_state=config['general']['random_state'])
 
-
-def save_model(model, folder, best_model_state, best_test_rmse, best_epoch, num_epochs, lr_name=None):
-    lr_value = lr_name if lr_name is not None else ''
-
-    if best_model_state is not None:
-            torch.save(best_model_state, f'{folder}/cnn_i4_best_model_{lr_value}.pt')
-            print(f'Best RMSE: {best_test_rmse:.4f}MeV found in epoch {best_epoch}')
-    else:
-        torch.save(model.state_dict(), f'{folder}/cnn_i4_model_{num_epochs}_epochs_{lr_value}.pt')
-        print('Best model not found. Saving last model')
-    return
-
-
-def load_model(model, folder, best_model_state, best_test_rmse, best_epoch, num_epochs):
-    if best_model_state is not None:
-        model.load_state_dict(best_model_state, map_location=device)
-        print(f'Model loaded from epoch {best_epoch} with RMSE: {best_test_rmse:.4f} MeV')
-    else:
-        model.load_state_dict(torch.load(f'{folder}/cnn_i4_model_{num_epochs}_epochs.pt', map_location=device))
-        print('Best model not found. Loading last model')
-    return
-
-
-def train_model(model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, folder, lr_name=None):
-    criterion = nn.MSELoss() #Instance of the MSE
-    OptimizerClass = getattr(optim, optimizer_name)
-    optimizer = OptimizerClass(model.parameters(), lr=learning_rate) #model.parameters()=weights and biases to optimize
-    #lr=how much to adjust the model's parameters with respect to the loss gradient in each epoch.
-    #Adam=adaptative moment estimation. It calculates a separate learning rate for each parameter
-
-    print(f'Total number of parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
-    #p.numel() counts the number of elements that has every tensor. 
-    #We only count those which are used for training (requires_grad=True).
-
-    train_loss_rmse_values = []
-    test_loss_rmse_values = []
-    best_test_rmse = float('inf')
-    best_model_state = None
-    best_epoch = 0
-    epochs_without_improvement = 0
-
-    for epoch in range(num_epochs):
-        model.train()
-        optimizer.zero_grad() #Reset of gradients to zero to avoid accumulation from previous runs
-        train_outputs = model(train_inputs.to(device))
-        train_loss = criterion(train_outputs, train_targets)
-        train_loss.backward() #Gradients of the loss with respect to model parameters using backpropagation
-        optimizer.step() #We update the model parameters using the calculated gradients
-        train_loss_rmse = torch.sqrt(train_loss)
-        train_loss_rmse_values.append(train_loss_rmse.item())
-
-        model.eval()
-        with torch.no_grad(): #We disable gradient calculation for the test phase
-            test_outputs = model(test_inputs.to(device))
-            test_loss_mse = criterion(test_outputs, test_targets)
-            test_loss_rmse = torch.sqrt(test_loss_mse)
-            test_loss_rmse_values.append(test_loss_rmse.item())
-
-        if (epoch + 1) % 100 == 0:
-            print(f'Epoch [{epoch+1}/{num_epochs}], Train loss: {train_loss_rmse.item():.4f} MeV, Test loss: {test_loss_rmse.item():.4f} MeV')
-                  
-        if test_loss_rmse.item() < best_test_rmse:
-            best_test_rmse = test_loss_rmse.item()
-            best_model_state = model.state_dict()
-            best_epoch = epoch + 1
-            epochs_without_improvement = 0
-        else:
-            epochs_without_improvement += 1
-
-        if epochs_without_improvement >= patience:
-            print(f'There was no improvement in {patience} epochs. Training stopped.')
-            break
-
-    save_model(model, folder, best_model_state, best_test_rmse, best_epoch, num_epochs, lr_name)
-    return train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch
-
-
 # Learning rates study
-learning_rates = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1, 0.5]
+learning_rates = [0.00001, 0.00005]
 
 for lr in learning_rates:
     print(f"\nTraining with learning rate: {lr}")
     
     model = CNN_I4().to(device)
-    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, lr, optimizer_name, patience, I4_lr_folder, lr)
+    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
+        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, lr, optimizer_name, patience, I4_lr_folder, model_name, lr)
     
     plt.figure(figsize=(10, 5))
     epochs_used = len(train_loss_rmse_values)
@@ -178,8 +101,8 @@ for lr in learning_rates:
 
 # One training of the model
 model = CNN_I4().to(device) #Instance of our model
-train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I4_results_folder)
+train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
+    model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I4_results_folder, model_name)
 
 plt.figure(figsize=(10, 5))
 epochs_used = len(train_loss_rmse_values)
@@ -232,13 +155,13 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(inputs_tensor)):
     train_targets, test_targets = targets_tensor[train_idx], targets_tensor[test_idx]
     model = CNN_I4().to(device)
 
-    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch = train_model(
-        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I4_results_folder)
+    train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
+        model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I4_results_folder, model_name)
     
     rmse_train_list.append(min(train_loss_rmse_values))
     rmse_test_list.append(best_test_rmse) 
 
-    print(f"Fold {fold + 1}: Best RMSE (Test): {best_test_rmse:.4f}MeV in epoch {best_epoch}")
+    print(f"Fold {fold + 1}: Best RMSE (Test): {best_test_rmse:.4f}MeV in epoch {best_epoch_test}")
 
 mean_rmse_train = np.mean(rmse_train_list)
 std_rmse_train = np.std(rmse_train_list)

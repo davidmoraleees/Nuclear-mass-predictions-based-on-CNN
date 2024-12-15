@@ -1,10 +1,8 @@
 import torch
-import torch.nn as nn
 import pandas as pd
 import numpy as np
 import yaml
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
 from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
 from utils import plot_differences_new, evaluate_single_nucleus
