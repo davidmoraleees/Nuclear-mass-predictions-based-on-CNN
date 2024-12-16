@@ -13,6 +13,17 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12,
+    'figure.titlesize': 18,
+})
+
+
 def create_5x5_neighborhood_i3(data, idx, data_feature):
     current_n = data.iloc[idx]['N']
     current_z = data.iloc[idx]['Z']
