@@ -40,26 +40,3 @@ class CNN_I4(nn.Module):
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-    
-class CNN_I4_Attention(nn.Module):
-    def __init__(self):
-        super(CNN_I4_Attention, self).__init__()
-        self.conv1 = nn.Conv2d(4, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.attention = nn.Sequential(
-            nn.Conv2d(64, 1, kernel_size=1),
-            nn.Sigmoid()
-        )
-        self.fc1 = nn.Linear(64 * 5 * 5, 128)
-        self.fc2 = nn.Linear(128, 1)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        attention_weights = self.attention(x)  
-        x = x * attention_weights 
-        x = x.view(x.size(0), -1)
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x

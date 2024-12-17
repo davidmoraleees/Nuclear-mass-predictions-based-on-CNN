@@ -7,21 +7,25 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import yaml
 import datetime
+import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
-plt.rcParams.update({
-    'font.size': 14,
-    'axes.titlesize': 16,
-    'axes.labelsize': 14,
-    'xtick.labelsize': 12,
-    'ytick.labelsize': 12,
-    'legend.fontsize': 12,
-    'figure.titlesize': 18,
-})
+def fontsizes(config):
+    plt.rcParams.update({
+        'font.size': config['fontsizes']['font_size'],
+        'axes.titlesize': config['fontsizes']['axes_title_size'],
+        'axes.labelsize': config['fontsizes']['axes_label_size'],
+        'xtick.labelsize': config['fontsizes']['xtick_labelsize'],
+        'ytick.labelsize': config['fontsizes']['ytick_labelsize'],
+        'legend.fontsize': config['fontsizes']['legend_fontsize'],
+        'figure.titlesize': config['fontsizes']['figure_title_size'],
+    })
+
+fontsizes(config)
 
 
 def create_5x5_neighborhood_i3(data, idx, data_feature):
@@ -345,3 +349,20 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
         f.write(f"Execution ended at: {end_time_str}\n\n\n")
 
     return train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test
+
+
+def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epochs, num_epochs, lr, lr_folder, model_name):
+        plt.figure(figsize=(10, 5))
+        epochs_used = len(train_loss_rmse_values)
+        plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
+        plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
+        plt.title(f'Evolution of RMSE over {num_epochs} epochs (lr={lr})')
+        plt.xlabel('Epoch')
+        plt.ylabel('RMSE (MeV)')
+        max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
+        plt.xlim(plot_skipping_epochs, epochs_used + 1)
+        plt.ylim(0, max_value) 
+        plt.legend()
+        plt.grid()
+        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.png'))
+        plt.close()

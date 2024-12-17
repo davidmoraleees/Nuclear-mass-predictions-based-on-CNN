@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 from matplotlib.colors import TwoSlopeNorm
+from utils import fontsizes
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -20,6 +21,8 @@ ap = config['LDM']['ap']
 remove_hashtags = config['data']['remove_hashtags']
 data_folder = 'data'
 data_processing_plots = 'Data processing plots' #Plots folder of AME2016 dataset
+
+fontsizes(config)
 
 # Extracting data from WS4 file
 with open(f'{data_folder}/WS4.txt', 'r') as file:

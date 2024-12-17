@@ -6,9 +6,12 @@ import matplotlib.pyplot as plt
 from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
 from utils import plot_differences_new, evaluate_single_nucleus
+from utils import fontsizes
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
+
+fontsizes(config)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 csv_file = "data/mass2020_cleaned_with_#.csv"

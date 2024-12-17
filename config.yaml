@@ -3,11 +3,11 @@ LDM:
   m_n: 1008664.91582 # micro-u
   m_H: 1007825.03224 # micro-u
   m_e: 0.51099895069 # MeV
-  av: 15.56 # MeV
-  aS: 17.23 # MeV
-  ac: 0.697 # MeV
-  aA: 23.285 # MeV
-  ap: 12 # MeV
+  av: 14.9297  # MeV
+  aS: 15.0580  # MeV
+  ac: 0.6615  # MeV
+  aA: 21.6091 # MeV
+  ap: 10.1744 # MeV
 
 data:
   csv_file: 'data/mass2016_cleaned_with_#.csv'
@@ -37,3 +37,12 @@ model:
 
 kfolding:
   n_splits: 5
+
+fontsizes:
+  font_size: 16
+  axes_title_size: 18
+  axes_label_size: 16
+  xtick_labelsize: 14
+  ytick_labelsize: 14
+  legend_fontsize: 14
+  figure_title_size: 20

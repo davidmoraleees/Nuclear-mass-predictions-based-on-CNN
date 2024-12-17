@@ -9,7 +9,8 @@ import yaml
 from models import CNN_I3
 from utils import create_5x5_neighborhood_i3
 from utils import plot_differences, plot_differences_nuclear_masses
-from utils import train_model
+from utils import train_model, plot_evolution
+from utils import fontsizes
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -29,15 +30,7 @@ I3_results_folder = 'CNN-I3 results'
 I3_lr_folder = 'CNN-I3 experiments learning rates'
 model_name = 'I3'
 
-plt.rcParams.update({
-    'font.size': 14,
-    'axes.titlesize': 16,
-    'axes.labelsize': 14,
-    'xtick.labelsize': 12,
-    'ytick.labelsize': 12,
-    'legend.fontsize': 12,
-    'figure.titlesize': 18,
-})
+fontsizes(config)
 
 inputs = [] #3x5x5 matrices of inputs
 targets = [] #Binding energies of the target nucleus
@@ -66,21 +59,8 @@ for lr in learning_rates:
     model = CNN_I3().to(device)
     train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
         model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, lr, optimizer_name, patience, I3_lr_folder, model_name, lr)
-    
-    plt.figure(figsize=(10, 5))
-    epochs_used = len(train_loss_rmse_values)
-    plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
-    plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
-    plt.title(f'Evolution of RMSE over {num_epochs} epochs (lr={lr})')
-    plt.xlabel('Epoch')
-    plt.ylabel('RMSE (MeV)')
-    max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
-    plt.xlim(plot_skipping_epochs, epochs_used + 1)
-    plt.ylim(0, max_value) 
-    plt.legend()
-    plt.grid()
-    plt.savefig(os.path.join(I3_lr_folder, f'CNN-I3_evolution_lr_{lr}.png'))
-    plt.close()
+
+    plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epochs, num_epochs, lr, I3_lr_folder, model_name)
     
     color_limits_storage = {}
     color_limits_storage['color_limits'] = (-6, 0, 6)
@@ -106,5 +86,3 @@ for lr in learning_rates:
 
     plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
                                     'Difference exp-predicted (test set) nuclear masses', f'{I3_lr_folder}/CNN-I3_diff_scatter_test_nuclear_masses_lr_{lr}.png', best_test_rmse)
-
- 

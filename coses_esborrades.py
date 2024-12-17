@@ -1,23 +1,9 @@
-
 # One training of the model
 model = CNN_I3().to(device) #Instance of our model
 train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
     model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I3_results_folder, model_name)
 
-plt.figure(figsize=(10, 5))
-epochs_used = len(train_loss_rmse_values)
-plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
-plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
-plt.title(f'Evolution of RMSE over {num_epochs} epochs')
-plt.xlabel('Època')
-plt.ylabel('RMSE (MeV)')
-max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
-plt.xlim(plot_skipping_epochs, epochs_used + 1)
-plt.ylim(0, max_value) 
-plt.legend()
-plt.grid()
-plt.savefig(f'{I3_results_folder}/CNN-I3_evolution.png')
-plt.close()
+plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epochs, num_epochs, learning_rate, I3_results_folder, model_name)
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
@@ -78,25 +64,13 @@ print(f"Final Average Test RMSE: {mean_rmse_test:.4f} ± {std_rmse_test:.4f} MeV
 
 
 
+
 # One training of the model
 model = CNN_I4().to(device) #Instance of our model
 train_loss_rmse_values, test_loss_rmse_values, num_epochs, best_test_rmse, best_epoch_test = train_model(
     model, train_inputs, train_targets, test_inputs, test_targets, num_epochs, learning_rate, optimizer_name, patience, I4_results_folder, model_name)
 
-plt.figure(figsize=(10, 5))
-epochs_used = len(train_loss_rmse_values)
-plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
-plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
-plt.title(f'Evolution of RMSE over {num_epochs} epochs')
-plt.xlabel('Època')
-plt.ylabel('RMSE (MeV)')
-max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
-plt.xlim(plot_skipping_epochs, epochs_used + 1)
-plt.ylim(0, max_value) 
-plt.legend()
-plt.grid()
-plt.savefig(f'{I4_results_folder}/CNN-I4_evolution.png')
-plt.close()
+plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epochs, num_epochs, learning_rate, I4_results_folder, model_name)
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
