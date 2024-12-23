@@ -7,6 +7,7 @@ from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
 from utils import plot_differences_new, evaluate_single_nucleus
 from utils import fontsizes
+import matplotlib.backends.backend_pdf as pdf
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -79,23 +80,30 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-point_size = 70
+point_size = 90
 
-plt.figure(figsize=(10, 6))
-plt.axvspan(155.5, 170.5, color='gray', alpha=0.3)
-
+plt.figure(figsize=(10, 8))
+legend_labels = set()
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
-    plt.scatter(model_data["N"], model_data["Difference (MeV)"] * (-1), marker=markers[model_name], label=model_name, color=colors[model_name], s=point_size)
-# We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
 
-plt.axhline(0, color='black', linewidth=2, linestyle='--')
+    filled_points = model_data[~model_data["N"].isin([171, 172, 173])]
+    plt.scatter(filled_points["N"], filled_points["Difference (MeV)"] * (-1), marker=markers[model_name], label=f"{model_name} (Training)" if f"{model_name} (Training)" not in legend_labels else None, color=colors[model_name], s=point_size, zorder=3)
+    legend_labels.add(f"{model_name} (Training)")
+    
+    empty_points = model_data[model_data["N"].isin([171, 172, 173])]
+    plt.scatter(empty_points["N"], empty_points["Difference (MeV)"] * (-1), marker=markers[model_name], label=f"{model_name} (Extrapolation)" if f"{model_name} (Extrapolation)" not in legend_labels else None, edgecolors=colors[model_name], facecolors='none', s=point_size, zorder=3)
+    legend_labels.add(f"{model_name} (Extrapolation)")
+
+    plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
+    # We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
+
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
 plt.xlabel("N")
 plt.ylabel("Difference (MeV)")
 plt.legend()
-plt.xticks(ticks=range(156, 174))
-plt.grid(True)
+plt.xticks(ticks=range(156, 174, 2))
+plt.grid()
 plt.tight_layout()
 plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf")
 plt.close()
@@ -156,20 +164,28 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-plt.figure(figsize=(10, 6))
-plt.axvspan(112.5, 117.5, color='gray', alpha=0.3)
+plt.figure(figsize=(10, 8))
+legend_labels = set()
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
-    plt.scatter(model_data["Z"], model_data["Difference (MeV)"]*(-1), marker=markers[model_name], label=model_name, color=colors[model_name], s=point_size)
 
-plt.axhline(0, color='black', linewidth=2, linestyle='--')
+    filled_points = model_data[~model_data["Z"].isin([110, 111, 112])]
+    plt.scatter(filled_points["Z"], filled_points["Difference (MeV)"] * (-1), marker=markers[model_name], label=f"{model_name} (Training)" if f"{model_name} (Training)" not in legend_labels else None, color=colors[model_name], s=point_size, zorder=3)
+    legend_labels.add(f"{model_name} (Training)")
+
+    empty_points = model_data[model_data["Z"].isin([110, 111, 112])]
+    plt.scatter(empty_points["Z"], empty_points["Difference (MeV)"] * (-1), marker=markers[model_name], label=f"{model_name} (Extrapolation)" if f"{model_name} (Extrapolation)" not in legend_labels else None, edgecolors=colors[model_name], facecolors='none', s=point_size, zorder=3)
+    legend_labels.add(f"{model_name} (Extrapolation)")
+
+    plt.plot(model_data["Z"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
+
+plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
 plt.xlabel("Z")
 plt.ylabel("Difference (MeV)")
 plt.legend()
-plt.xticks(ticks=range(110, 118))
-plt.grid(True)
+plt.xticks(ticks=range(110, 118, 2))
+plt.grid()
 plt.tight_layout()
 plt.savefig("Tests new nuclei/N174_isotonic_chain.pdf")
 plt.close()
