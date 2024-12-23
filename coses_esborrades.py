@@ -7,24 +7,24 @@ plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epoc
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                'Difference exp-predicted (all data)', f'{I3_results_folder}/CNN-I3_diff_scatter.png', best_test_rmse)
+                f'{I3_results_folder}/CNN-I3_diff_scatter.pdf', best_test_rmse)
 
 plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                'Difference exp-predicted (training set)', f'{I3_results_folder}/CNN-I3_diff_scatter_train.png', best_test_rmse)
+                f'{I3_results_folder}/CNN-I3_diff_scatter_train.pdf', best_test_rmse)
 
 plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                'Difference exp-predicted (test set)', f'{I3_results_folder}/CNN-I3_diff_scatter_test.png', best_test_rmse)
+                f'{I3_results_folder}/CNN-I3_diff_scatter_test.pdf', best_test_rmse)
 
 # Now we convert total binding energy predictions into nuclear mass predictions
 color_limits_storage = {}
 plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                                'Difference exp-predicted (all data) nuclear masses', f'{I3_results_folder}/CNN-I3_diff_scatter_nuclear_masses.png', best_test_rmse)
+                                f'{I3_results_folder}/CNN-I3_diff_scatter_nuclear_masses.pdf', best_test_rmse)
 
 plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
-                                'Difference exp-predicted (training set) nuclear masses', f'{I3_results_folder}/CNN-I3_diff_scatter_train_nuclear_masses.png', best_test_rmse)
+                                f'{I3_results_folder}/CNN-I3_diff_scatter_train_nuclear_masses.pdf', best_test_rmse)
 
 plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
-                                'Difference exp-predicted (test set) nuclear masses', f'{I3_results_folder}/CNN-I3_diff_scatter_test_nuclear_masses.png', best_test_rmse)
+                                f'{I3_results_folder}/CNN-I3_diff_scatter_test_nuclear_masses.pdf', best_test_rmse)
 
 
 # K-folding
@@ -74,24 +74,24 @@ plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epoc
 
 color_limits_storage = {}
 plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                'Difference exp-predicted (all data)', f'{I4_results_folder}/CNN-I4_diff_scatter.png', best_test_rmse)
+                'Difference exp-predicted (all data)', f'{I4_results_folder}/CNN-I4_diff_scatter.pdf', best_test_rmse)
 
 plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                'Difference exp-predicted (training set)', f'{I4_results_folder}/CNN-I4_diff_scatter_train.png', best_test_rmse)
+                'Difference exp-predicted (training set)', f'{I4_results_folder}/CNN-I4_diff_scatter_train.pdf', best_test_rmse)
 
 plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                'Difference exp-predicted (test set)', f'{I4_results_folder}/CNN-I4_diff_scatter_test.png', best_test_rmse)
+                'Difference exp-predicted (test set)', f'{I4_results_folder}/CNN-I4_diff_scatter_test.pdf', best_test_rmse)
 
 # Now we convert total binding energy predictions into nuclear mass predictions
 color_limits_storage = {}
 plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                                'Difference exp-predicted (all data) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (all data) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_nuclear_masses.pdf', best_test_rmse)
 
 plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
-                                'Difference exp-predicted (training set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_train_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (training set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_train_nuclear_masses.pdf', best_test_rmse)
 
 plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
-                                'Difference exp-predicted (test set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_test_nuclear_masses.png', best_test_rmse)
+                                'Difference exp-predicted (test set) nuclear masses', f'{I4_results_folder}/CNN-I4_diff_scatter_test_nuclear_masses.pdf', best_test_rmse)
 
 
 # K-folding

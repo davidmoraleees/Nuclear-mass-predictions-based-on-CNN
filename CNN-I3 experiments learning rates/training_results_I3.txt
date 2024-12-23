@@ -1,0 +1,35 @@
+Model trained: CNN-I3
+Execution started at: 2024-12-18 04:27:03
+Best train RMSE: 0.3889 MeV, Best train epoch: 330360
+Best test RMSE: 0.5862 MeV, Best test epoch: 325363
+Execution ended at: 2024-12-18 07:01:39
+
+
+Model trained: CNN-I3
+Execution started at: 2024-12-18 07:01:41
+Best train RMSE: 0.4264 MeV, Best train epoch: 184392
+Best test RMSE: 0.5845 MeV, Best test epoch: 179424
+Execution ended at: 2024-12-18 08:28:09
+
+
+Model trained: CNN-I3
+Execution started at: 2024-12-23 10:54:50
+Best train RMSE: 1092.8348 MeV, Best train epoch: 300
+Best test RMSE: 1060.5834 MeV, Best test epoch: 300
+Execution ended at: 2024-12-23 10:54:58
+
+
+Model trained: CNN-I3
+Execution started at: 2024-12-23 10:57:15
+Best train RMSE: 1009.7712 MeV, Best train epoch: 300
+Best test RMSE: 979.7179 MeV, Best test epoch: 300
+Execution ended at: 2024-12-23 10:57:22
+
+
+Model trained: CNN-I3
+Execution started at: 2024-12-23 10:57:25
+Best train RMSE: 85.4470 MeV, Best train epoch: 300
+Best test RMSE: 80.0596 MeV, Best test epoch: 300
+Execution ended at: 2024-12-23 10:57:33
+
+

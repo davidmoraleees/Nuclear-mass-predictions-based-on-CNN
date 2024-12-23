@@ -313,20 +313,20 @@ for lr in learning_rates:
     plt.ylim(0, max_value) 
     plt.legend()
     plt.grid()
-    plt.savefig(os.path.join(output_folder, f'CNN-WS4_evolution_lr_{lr}.png'))
+    plt.savefig(os.path.join(output_folder, f'CNN-WS4_evolution_lr_{lr}.pdf'))
     plt.close()
     
     color_limits_storage = {}
     plot_differences(data, inputs_tensor, targets_tensor, ws4_tensor, range(len(data)), model, device,
                      f'Difference exp-predicted (all data, lr={lr})',
-                     f"{output_folder}/diff_scatter_all_lr_{lr}.png", best_test_rmse)
+                     f"{output_folder}/diff_scatter_all_lr_{lr}.pdf", best_test_rmse)
     
     plot_differences(data, train_inputs, train_targets, train_ws4, train_indices, model, device,
                      f'Difference exp-predicted (training set, lr={lr})',
-                     f"{output_folder}/diff_scatter_train_lr_{lr}.png", best_test_rmse)
+                     f"{output_folder}/diff_scatter_train_lr_{lr}.pdf", best_test_rmse)
     
     plot_differences(data, test_inputs, test_targets, test_ws4, test_indices, model, device,
                      f'Difference exp-predicted (test set, lr={lr})',
-                     f"{output_folder}/diff_scatter_test_lr_{lr}.png", best_test_rmse)
+                     f"{output_folder}/diff_scatter_test_lr_{lr}.pdf", best_test_rmse)
     
 

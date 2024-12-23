@@ -39,6 +39,9 @@ ac = config['LDM']['ac']
 aA = config['LDM']['aA']
 ap = config['LDM']['ap']
 
+color_limits_storage = {}
+color_limits_storage['color_limits'] = (-6, 0, 6)
+
 results = []
 
 for model_config in models_config:
@@ -75,23 +78,26 @@ output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
+markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
+point_size = 70
+
 plt.figure(figsize=(10, 6))
 plt.axvspan(155.5, 170.5, color='gray', alpha=0.3)
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["N"], model_data["Difference (MeV)"]*(-1), marker="o", label=model_name, color=colors[model_name])
+    plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
+    plt.scatter(model_data["N"], model_data["Difference (MeV)"] * (-1), marker=markers[model_name], label=model_name, color=colors[model_name], s=point_size)
 # We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
 
 plt.axhline(0, color='black', linewidth=2, linestyle='--')
-plt.title('Nuclear mass differences in Mt isotopic chain')
 plt.xlabel("N")
 plt.ylabel("Difference (MeV)")
 plt.legend()
 plt.xticks(ticks=range(156, 174))
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("Tests new nuclei/Mt_isotopic_chain.png")
+plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf")
 plt.close()
 
 print('Succeeded in evaulating the Mt isotopic chain.')
@@ -149,28 +155,29 @@ output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
+markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
 plt.figure(figsize=(10, 6))
 plt.axvspan(112.5, 117.5, color='gray', alpha=0.3)
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
-    plt.plot(model_data["Z"], model_data["Difference (MeV)"]*(-1), marker="o", label=model_name, color=colors[model_name])
+    plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
+    plt.scatter(model_data["Z"], model_data["Difference (MeV)"]*(-1), marker=markers[model_name], label=model_name, color=colors[model_name], s=point_size)
 
 plt.axhline(0, color='black', linewidth=2, linestyle='--')
-plt.title('Nuclear mass differences in N=174 isotonic chain')
 plt.xlabel("Z")
 plt.ylabel("Difference (MeV)")
 plt.legend()
 plt.xticks(ticks=range(110, 118))
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("Tests new nuclei/N174_isotonic_chain.png")
+plt.savefig("Tests new nuclei/N174_isotonic_chain.pdf")
 plt.close()
 
 print('Succeeded in evaulating the N=174 isotonic chain.')
 
 
-# Evaluations of the CNN-I3 model on the whole dataset
+# Evaluations of the CNN-I3 model on the whole dataset to evaluate 2020
 model = CNN_I3().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 model.eval()
@@ -198,10 +205,8 @@ data['prediction_i3'] = predictions
 data['difference_i3'] = real_values - predictions
 data.to_csv(csv_file, index=False, sep=';')
 
-output_file = "Tests new nuclei/differences_plot_i3_all_nuclei.png"
-plot_differences_new(data, real_values, predictions, 
-                 title="Difference between real values and predicted ones",
-                 file_name=output_file)
+output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2020.pdf"
+plot_differences_new(data, real_values, predictions, file_name=output_file)
 
 new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
 new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
@@ -212,13 +217,12 @@ predictions_new = predictions[new_nuclei_indices]
 rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
 print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
 
-output_file = "Tests new nuclei/differences_plot_i3_new_nuclei.png"
-plot_differences_new(new_nuclei, real_values_new, predictions_new, 
-                 title="Difference between real values and predicted ones",
-                 file_name=output_file)
+output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.pdf"
+plot_differences_new(new_nuclei, real_values_new, predictions_new, file_name=output_file)
+print('Succeded in evaluating CNN-I3 on the whole dataset to evaluate 2020')
 
 
-# Evaluations of the CNN-I4 on the whole dataset
+# Evaluations of the CNN-I4 on the whole dataset to evauluate 2020
 model_path = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"   
 model = CNN_I4().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
@@ -247,10 +251,8 @@ data['prediction_i4'] = predictions
 data['difference_i4'] = real_values - predictions
 data.to_csv(csv_file, index=False, sep=';')
 
-output_file = "Tests new nuclei/differences_plot_i4_all_nuclei.png"
-plot_differences_new(data, real_values, predictions, 
-                 title="Difference between real values and predicted ones",
-                 file_name=output_file)
+output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2020.pdf"
+plot_differences_new(data, real_values, predictions, file_name=output_file)
 
 new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
 new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
@@ -261,7 +263,84 @@ predictions_new = predictions[new_nuclei_indices]
 rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
 print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
 
-output_file = "Tests new nuclei/differences_plot_i4_new_nuclei.png"
-plot_differences_new(new_nuclei, real_values_new, predictions_new, 
-                 title="Difference between real values and predicted ones",
-                 file_name=output_file)
+output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.pdf"
+plot_differences_new(new_nuclei, real_values_new, predictions_new, file_name=output_file)
+print('Succeded in evaluating CNN-I4 on the whole dataset to evaluate 2020')
+
+
+# Evaluations of the CNN-I3 model on the whole dataset to evaluate 2016
+csv_file = "data/mass2016_cleaned_with_#.csv"
+model_path = "Tests new nuclei/cnn_i3_best_model_1e-05.pt"  
+data_feature = config['data']['data_feature'] 
+
+data = pd.read_csv(csv_file, delimiter=';')
+
+model = CNN_I3().to(device)
+model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+model.eval()
+
+real_values = []
+predictions = []
+
+for idx in range(len(data)):
+    z_grid, n_grid, data_feature_grid = create_5x5_neighborhood_i3(data, idx, data_feature)
+    input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, data_feature_grid])]), dtype=torch.float32).to(device)
+    real_value = data.iloc[idx][data_feature]
+    with torch.no_grad():
+        predicted_value = model(input_tensor).item()
+    real_values.append(real_value)
+    predictions.append(predicted_value)
+
+real_values = np.array(real_values)
+predictions = np.array(predictions)
+rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
+
+print(f"RMSE global I3: {rmse_global:.4f} MeV")
+
+data['bind_ene_total_antic'] = data['bind_ene_total']
+data['prediction_i3_antic'] = predictions
+data['difference_i3_antic'] = real_values - predictions
+data.to_csv(csv_file, index=False, sep=';')
+
+output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.pdf"
+plot_differences_new(data, real_values, predictions, file_name=output_file)
+print('Succeded in evaluating CNN-I3 on the whole dataset to evaluate 2016')
+
+
+# Evaluations of the CNN-I4 model on the whole dataset to evaluate 2016
+csv_file = "data/mass2016_cleaned_with_#.csv"
+model_path = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"  
+data_feature = config['data']['data_feature'] 
+
+data = pd.read_csv(csv_file, delimiter=';')
+
+model = CNN_I4().to(device)
+model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+model.eval()
+
+real_values = []
+predictions = []
+
+for idx in range(len(data)):
+    z_grid, n_grid, delta_I4_grid, data_feature_grid = create_5x5_neighborhood_i4(data, idx, data_feature)
+    input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, delta_I4_grid, data_feature_grid])]), dtype=torch.float32).to(device)
+    real_value = data.iloc[idx][data_feature]
+    with torch.no_grad():
+        predicted_value = model(input_tensor).item()
+    real_values.append(real_value)
+    predictions.append(predicted_value)
+
+real_values = np.array(real_values)
+predictions = np.array(predictions)
+rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
+
+print(f"RMSE global I4: {rmse_global:.4f} MeV")
+
+data['bind_ene_total_antic'] = data['bind_ene_total']
+data['prediction_i4_antic'] = predictions
+data['difference_i4_antic'] = real_values - predictions
+data.to_csv(csv_file, index=False, sep=';')
+
+output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2016.pdf"
+plot_differences_new(data, real_values, predictions, file_name=output_file)
+print('Succeded in evaluating CNN-I4 on the whole dataset to evaluate 2016')

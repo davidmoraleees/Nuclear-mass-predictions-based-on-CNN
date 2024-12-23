@@ -137,7 +137,7 @@ metrics = [
 calculate_rmse(df2016, metrics)
 
 
-def plot_data(df, df_column, title, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
+def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
     plt.figure(figsize=(10, 6))
 
     if vmin is None:
@@ -161,54 +161,53 @@ def plot_data(df, df_column, title, colorbar_label, filename, folder, cmap, vmin
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z') 
-    plt.title(title)
     plt.savefig(os.path.join(folder, filename))
     plt.close()
 
 
 #Plot of the theoretical binding energy per nucleon as a function of Z and N
-plot_data(df2016, 'bind_ene_teo', 'Theoretical binding energy per nucleon LDM', '(MeV)', 'bind_teo_per_nucleon.png',
+plot_data(df2016, 'bind_ene_teo', '(MeV)', 'bind_teo_per_nucleon.pdf',
           data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the experimental binding energy per nucleon as a function of Z and N
-plot_data(df2016, 'bind_ene', 'Experimental binding energy per nucleon', '(MeV)', 'bind_exp_per_nucleon.png',
+plot_data(df2016, 'bind_ene', '(MeV)', 'bind_exp_per_nucleon.pdf',
           data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the difference between theoretical and experimental binding energies per nucleon
-plot_data(df2016, 'Diff_bind_ene', 'Difference exp-teo binding energy per nucleon', '(MeV)', 'bind_teoexp_dif_per_nucleon.png',
+plot_data(df2016, 'Diff_bind_ene', '(MeV)', 'bind_teoexp_dif_per_nucleon.pdf',
           data_processing_plots, cmap='seismic', vmin=df2016['Diff_bind_ene'].min(), vcenter=0, vmax=df2016['Diff_bind_ene'].max())
 
 #Plot of the difference between mass excess from AME and the one calculated
-plot_data(df2016, 'Diff_mass_excess', 'Difference exp-calculated in mass_excess', '(keV)',
-          'mass_excess_expcalc_dif.png', data_processing_plots, cmap='seismic') 
+plot_data(df2016, 'Diff_mass_excess', '(keV)',
+          'mass_excess_expcalc_dif.pdf', data_processing_plots, cmap='seismic') 
                                    
 #Plot of the difference between atomic mass from AME and the one calculated                                  
-plot_data(df2016, 'Diff_atomic_mass', 'Difference exp-calculated in atomic mass', '(MeV)',
-          'atomic_mass_expcalc_dif.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'Diff_atomic_mass', '(MeV)',
+          'atomic_mass_expcalc_dif.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the experimental atomic mass                                        
-plot_data(df2016, 'atomic_mass', 'Experimental atomic mass', '(MeV)',
-          'atomic_mass_exp.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'atomic_mass', '(MeV)',
+          'atomic_mass_exp.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the theoretical atomic mass                                        
-plot_data(df2016, 'atomic_mass_teo', 'Theoretical atomic mass LDM', '(MeV)',
-          'atomic_mass_teo.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'atomic_mass_teo', '(MeV)',
+          'atomic_mass_teo.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between binding energy per nucleon from AME and the one calculated                                      
-plot_data(df2016, 'Diff_bind_ene_calcs', 'Difference exp-calculated in binding energy per nucleon', '(MeV)',
-          'bind_ene_expcalc_dif.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'Diff_bind_ene_calcs', '(MeV)',
+          'bind_ene_expcalc_dif.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the experimental nuclear mass from AME as a function of Z and N                                      
-plot_data(df2016, 'M_N_exp', 'Experimental nuclear mass', '(MeV)',
-          'nuclear_mass_exp.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'M_N_exp', '(MeV)',
+          'nuclear_mass_exp.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the theoretical nuclear mass as a function of Z and N                                      
-plot_data(df2016, 'M_N_teo', 'Theoretical nuclear mass LDM', '(MeV)',
-          'nuclear_mass_teo.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'M_N_teo', '(MeV)',
+          'nuclear_mass_teo.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
-plot_data(df2016, 'Diff_nuclear_mass', 'Difference exp-teo in nuclear mass', '(MeV)',
-          'nuclear_mass_expteo_dif.png', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'Diff_nuclear_mass', '(MeV)',
+          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic')
 
 #3D plot of the difference between theoretical and experimental binding energies per nucleon
 fig = plt.figure(figsize=(10, 6))
@@ -218,10 +217,9 @@ scatter = ax.scatter(df2016['Z'], df2016['N'], df2016['Diff_bind_ene'], c=df2016
                      cmap='seismic', norm=norm, edgecolor='None', s=12)
 ax.set_xlabel('Z')
 ax.set_ylabel('N')
-plt.title('3D Difference exp-teo binding energy per nucleon')
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('(MeV)')
-plt.savefig(os.path.join(data_processing_plots, 'bind_teoexp_dif_3D_per_nucleon.png'))
+plt.savefig(os.path.join(data_processing_plots, 'bind_teoexp_dif_3D_per_nucleon.pdf'))
 plt.close()
 
 
@@ -239,7 +237,7 @@ def calculate_shell_gaps(df, element, axis, type, column, year, remove):
     return df
 
 
-def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
+def plot_shell_gaps(df, gap_col, type, filename, data_processing_plots, vmin, vmax, xlim, ylim): #gap_col=delta_2n or delta_2p
     plot_name = "{}_{}".format(gap_col, type)
     plt.figure(figsize=(10, 6))
     scatter = plt.scatter(df['N'], df['Z'], c=df[plot_name], cmap='jet', edgecolor='None', s=12, vmin=vmin, vmax=vmax)
@@ -257,7 +255,6 @@ def plot_shell_gaps(df, gap_col, type, title, filename, data_processing_plots, v
     plt.ylim(ylim)
     plt.xlabel('N')
     plt.ylabel('Z')
-    plt.title("{}".format(title))
     plt.savefig(os.path.join(data_processing_plots, filename))
     plt.close()
 
@@ -274,13 +271,13 @@ max_value = max(df2016['delta_2n_exp'].max(), df2016['delta_2p_exp'].max(),
 xlim = (min(df2016['N'].min(), 0), max(df2016['N'].max() + 10, 0)) #Same limits for both plots
 ylim = (0, df2016['Z'].max() + 10)  
 
-plot_shell_gaps(df2016, 'delta_2n', 'exp', 'Experimental neutron shell gaps', 'neutron_shell_gaps_exp.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2n', 'exp', 'neutron_shell_gaps_exp.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2p', 'exp', 'Experimental proton shell gaps', 'proton_shell_gaps_exp.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2p', 'exp', 'proton_shell_gaps_exp.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2n', 'teo', 'Neutron shell gaps LDM', 'neutron_shell_gaps_teo.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2n', 'teo', 'neutron_shell_gaps_teo.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2p', 'teo', 'Proton shell gaps LDM', 'proton_shell_gaps_teo.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2p', 'teo', 'proton_shell_gaps_teo.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
                     
 
@@ -313,5 +310,5 @@ for df1, df2, output_file in scenarios:
 
 file = "data/df2016_2016_noyes.csv"
 d2016_2016_noyes = pd.read_csv(file, delimiter=';')
-plot_data(d2016_2016_noyes, 'Diff_nuclear_mass', 'Difference exp-teo in nuclear mass', '(MeV)', 'nuclear_mass_expteo_dif_#.png',
+plot_data(d2016_2016_noyes, 'Diff_nuclear_mass', '(MeV)', 'nuclear_mass_expteo_dif_#.pdf',
           'Data processing plots', cmap='seismic', vmin=d2016_2016_noyes['Diff_nuclear_mass'].min(), vmax=d2016_2016_noyes['Diff_nuclear_mass'].max())

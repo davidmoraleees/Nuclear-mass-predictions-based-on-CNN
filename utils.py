@@ -103,7 +103,7 @@ def create_5x5_neighborhood_i4(data, idx, data_feature):
 
 
 color_limits_storage = {}
-def plot_differences(data, inputs, targets, indices, model, device, title, file_name, best_test_rmse):
+def plot_differences(data, inputs, targets, indices, model, device, file_name, best_test_rmse):
     model.eval() 
     with torch.no_grad():
         outputs = model(inputs.to(device)).cpu().numpy()
@@ -138,13 +138,12 @@ def plot_differences(data, inputs, targets, indices, model, device, title, file_
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z')
-    plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
     plt.savefig(file_name)
     plt.close()
     return
 
 
-def plot_differences_nuclear_masses(data, inputs, targets, indices, model, device, title, file_name, best_test_rmse):
+def plot_differences_nuclear_masses(data, inputs, targets, indices, model, device, file_name, best_test_rmse):
     uma = config['LDM']['uma']
     m_e = config['LDM']['m_e']
     m_n =  config['LDM']['m_n']*(10**-6)*uma 
@@ -190,7 +189,6 @@ def plot_differences_nuclear_masses(data, inputs, targets, indices, model, devic
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z')
-    plt.title(f"{title}  RMSE: {best_test_rmse:.3f} MeV")
     plt.savefig(file_name)
     plt.close()
     return
@@ -222,7 +220,7 @@ def evaluate_single_nucleus(data, model, n_value, z_value, data_feature, neighbo
     return real_value, predicted_value, difference
 
 
-def plot_differences_new(data, real_values, predictions, title, file_name):
+def plot_differences_new(data, real_values, predictions, file_name):
     diff = real_values - predictions
     scatter_data = pd.DataFrame({
         'N': data['N'],
@@ -230,9 +228,15 @@ def plot_differences_new(data, real_values, predictions, title, file_name):
         'diff': diff
     })
     plt.figure(figsize=(10, 6))
-    vmin = scatter_data['diff'].min()
-    vmax = scatter_data['diff'].max()
-    vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+
+    if 'color_limits' not in color_limits_storage:
+        vmin = scatter_data['diff'].min()
+        vmax = scatter_data['diff'].max()
+        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+        color_limits_storage['color_limits'] = (vmin, vcenter, vmax)
+    else:
+        vmin, vcenter, vmax = color_limits_storage['color_limits']
+
     norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff']*(-1),
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
@@ -247,7 +251,6 @@ def plot_differences_new(data, real_values, predictions, title, file_name):
     plt.xlabel('N')
     plt.ylabel('Z')
     rmse = np.sqrt(np.mean(diff**2))
-    plt.title(f"{title}  RMSE: {rmse:.3f} MeV")
     plt.savefig(file_name)
     plt.close()
     return
@@ -356,7 +359,6 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         epochs_used = len(train_loss_rmse_values)
         plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
         plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
-        plt.title(f'Evolution of RMSE over {num_epochs} epochs (lr={lr})')
         plt.xlabel('Epoch')
         plt.ylabel('RMSE (MeV)')
         max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
@@ -364,5 +366,5 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         plt.ylim(0, max_value) 
         plt.legend()
         plt.grid()
-        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.png'))
+        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.pdf'))
         plt.close()

@@ -65,24 +65,21 @@ for lr in learning_rates:
     color_limits_storage = {}
     color_limits_storage['color_limits'] = (-6, 0, 6)
     plot_differences(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                     f'Difference exp-predicted (all data, lr={lr})',
-                     f"{I3_lr_folder}/CNN-I3_diff_scatter_lr_{lr}.png", best_test_rmse)
+                     f"{I3_lr_folder}/CNN-I3_diff_scatter_lr_{lr}.pdf", best_test_rmse)
     
     plot_differences(data, train_inputs, train_targets, train_indices, model, device,
-                     f'Difference exp-predicted (training set, lr={lr})',
-                     f"{I3_lr_folder}/CNN-I3_diff_scatter_train_lr_{lr}.png", best_test_rmse)
+                     f"{I3_lr_folder}/CNN-I3_diff_scatter_train_lr_{lr}.pdf", best_test_rmse)
     
     plot_differences(data, test_inputs, test_targets, test_indices, model, device,
-                     f'Difference exp-predicted (test set, lr={lr})',
-                     f"{I3_lr_folder}/CNN-I3_diff_scatter_test_lr_{lr}.png", best_test_rmse)
+                     f"{I3_lr_folder}/CNN-I3_diff_scatter_test_lr_{lr}.pdf", best_test_rmse)
     
     # Now we convert total binding energy predictions into nuclear mass predictions
     color_limits_storage['color_limits'] = (-6, 0, 6)
     plot_differences_nuclear_masses(data, inputs_tensor, targets_tensor, range(len(data)), model, device,
-                                    'Difference exp-predicted (all data) nuclear masses', f'{I3_lr_folder}/CNN-I3_diff_scatter_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    f'{I3_lr_folder}/CNN-I3_diff_scatter_nuclear_masses_lr_{lr}.pdf', best_test_rmse)
 
     plot_differences_nuclear_masses(data, train_inputs, train_targets, train_indices, model, device,
-                                    'Difference exp-predicted (training set) nuclear masses', f'{I3_lr_folder}/CNN-I3_diff_scatter_train_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    f'{I3_lr_folder}/CNN-I3_diff_scatter_train_nuclear_masses_lr_{lr}.pdf', best_test_rmse)
 
     plot_differences_nuclear_masses(data, test_inputs, test_targets, test_indices, model, device,
-                                    'Difference exp-predicted (test set) nuclear masses', f'{I3_lr_folder}/CNN-I3_diff_scatter_test_nuclear_masses_lr_{lr}.png', best_test_rmse)
+                                    f'{I3_lr_folder}/CNN-I3_diff_scatter_test_nuclear_masses_lr_{lr}.pdf', best_test_rmse)
