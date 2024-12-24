@@ -256,6 +256,49 @@ def plot_differences_new(data, real_values, predictions, file_name):
     return
 
 
+def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff_ldm, file_name):
+
+    fig, axes = plt.subplots(1, 3, figsize=(26, 6), sharey=True, gridspec_kw={'width_ratios': [1, 1, 1], 'wspace': 0.05})
+    
+    vmin = min(diff_i3.min(), diff_i4.min(), diff_ldm.min())
+    vmax = max(diff_i3.max(), diff_i4.max(), diff_ldm.max())
+    vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+
+    scatter1 = axes[0].scatter(data_ldm['N'], data_ldm['Z'], c=diff_ldm*(-1),
+                                cmap='seismic', norm=norm, edgecolor='None', s=12)
+    axes[0].set_title("LDM differences")
+    axes[0].set_xlabel("N")
+    axes[0].set_ylabel("Z")
+
+    scatter2 = axes[1].scatter(data_i3['N'], data_i3['Z'], c=diff_i3*(-1),
+                                cmap='seismic', norm=norm, edgecolor='None', s=12)
+    axes[1].set_title("CNN-I3 differences")
+    axes[1].set_xlabel("N")
+
+    scatter3 = axes[2].scatter(data_i4['N'], data_i4['Z'], c=diff_i4*(-1),
+                                cmap='seismic', norm=norm, edgecolor='None', s=12)
+    axes[2].set_title("CNN-I4 differences")
+    axes[2].set_xlabel("N")
+
+    magic_numbers = [8, 20, 28, 50, 82, 126]
+    for ax in axes:
+        for magic in magic_numbers:
+            ax.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+            ax.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+        ax.set_xticks(magic_numbers)
+        ax.set_yticks(magic_numbers)
+        ax.grid(alpha=0.3)
+
+    cbar = fig.colorbar(scatter1, ax=axes, orientation='vertical', fraction=0.02, pad=0.04)
+    cbar.set_label("(MeV)")
+
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.close()
+    return
+
+
 def save_model(model, folder, best_model_state, best_test_rmse, best_epoch, num_epochs, model_name, lr_name=None):
     lr_value = lr_name if lr_name is not None else ''
 
@@ -368,3 +411,31 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         plt.grid()
         plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.pdf'))
         plt.close()
+
+
+def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
+    plt.figure(figsize=(10, 6))
+
+    if vmin is None:
+        vmin = df[df_column].min()
+    if vmax is None:
+        vmax = df[df_column].max()
+    if vcenter is None:
+        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
+
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=12)
+    cbar = plt.colorbar(scatter)
+    cbar.set_label(colorbar_label)
+
+    magic_numbers = [8, 20, 28, 50, 82, 126]
+    for magic in magic_numbers:
+        plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
+        plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
+
+    plt.xticks(magic_numbers)
+    plt.yticks(magic_numbers)
+    plt.xlabel('N')
+    plt.ylabel('Z') 
+    plt.savefig(os.path.join(folder, filename))
+    plt.close()

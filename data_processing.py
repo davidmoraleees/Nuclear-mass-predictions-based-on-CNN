@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 from matplotlib.colors import TwoSlopeNorm
-from utils import fontsizes
+from utils import fontsizes, plot_data
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -135,35 +135,6 @@ metrics = [
     {'column': 'Diff_nuclear_mass', 'label': 'RMSE liquid droplet model (2016) nuclear masses', 'unit': 'MeV'},]
 
 calculate_rmse(df2016, metrics)
-
-
-def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
-    plt.figure(figsize=(10, 6))
-
-    if vmin is None:
-        vmin = df[df_column].min()
-    if vmax is None:
-        vmax = df[df_column].max()
-    if vcenter is None:
-        vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
-
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-    scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=12)
-    cbar = plt.colorbar(scatter)
-    cbar.set_label(colorbar_label)
-
-    magic_numbers = [8, 20, 28, 50, 82, 126]
-    for magic in magic_numbers:
-        plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
-        plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
-
-    plt.xticks(magic_numbers)
-    plt.yticks(magic_numbers)
-    plt.xlabel('N')
-    plt.ylabel('Z') 
-    plt.savefig(os.path.join(folder, filename))
-    plt.close()
-
 
 #Plot of the theoretical binding energy per nucleon as a function of Z and N
 plot_data(df2016, 'bind_ene_teo', '(MeV)', 'bind_teo_per_nucleon.pdf',

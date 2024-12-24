@@ -5,7 +5,7 @@ import yaml
 import matplotlib.pyplot as plt
 from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
-from utils import plot_differences_new, evaluate_single_nucleus
+from utils import plot_differences_new, plot_differences_combined, plot_data, evaluate_single_nucleus
 from utils import fontsizes
 import matplotlib.backends.backend_pdf as pdf
 
@@ -235,7 +235,7 @@ print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.pdf"
 plot_differences_new(new_nuclei, real_values_new, predictions_new, file_name=output_file)
-print('Succeded in evaluating CNN-I3 on the whole dataset to evaluate 2020')
+print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2020')
 
 
 # Evaluations of the CNN-I4 on the whole dataset to evauluate 2020
@@ -281,82 +281,97 @@ print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.pdf"
 plot_differences_new(new_nuclei, real_values_new, predictions_new, file_name=output_file)
-print('Succeded in evaluating CNN-I4 on the whole dataset to evaluate 2020')
+print('Succeeded in evaluating CNN-I4 on the whole dataset to evaluate 2020')
+
+
+
+
+file = "data/mass2016_cleaned_with_#.csv"
+df2016 = pd.read_csv(file, delimiter=';')
+
+diff_ldm = df2016['Diff_bind_ene_total']
 
 
 # Evaluations of the CNN-I3 model on the whole dataset to evaluate 2016
 csv_file = "data/mass2016_cleaned_with_#.csv"
-model_path = "Tests new nuclei/cnn_i3_best_model_1e-05.pt"  
+model_path_i3 = "Tests new nuclei/cnn_i3_best_model_1e-05.pt"  
 data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
 
-model = CNN_I3().to(device)
-model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
-model.eval()
+model_i3 = CNN_I3().to(device)
+model_i3.load_state_dict(torch.load(model_path_i3, map_location=device, weights_only=True))
+model_i3.eval()
 
-real_values = []
-predictions = []
+real_values_i3 = []
+predictions_i3 = []
 
 for idx in range(len(data)):
     z_grid, n_grid, data_feature_grid = create_5x5_neighborhood_i3(data, idx, data_feature)
     input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, data_feature_grid])]), dtype=torch.float32).to(device)
     real_value = data.iloc[idx][data_feature]
     with torch.no_grad():
-        predicted_value = model(input_tensor).item()
-    real_values.append(real_value)
-    predictions.append(predicted_value)
+        predicted_value = model_i3(input_tensor).item()
+    real_values_i3.append(real_value)
+    predictions_i3.append(predicted_value)
 
-real_values = np.array(real_values)
-predictions = np.array(predictions)
-rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
+real_values_i3 = np.array(real_values_i3)
+predictions_i3 = np.array(predictions_i3)
+diff_i3 = real_values_i3 - predictions_i3
+rmse_global_i3 = np.sqrt(np.mean(diff_i3 ** 2))
 
-print(f"RMSE global I3: {rmse_global:.4f} MeV")
+print(f"RMSE global I3: {rmse_global_i3:.4f} MeV")
 
 data['bind_ene_total_antic'] = data['bind_ene_total']
-data['prediction_i3_antic'] = predictions
-data['difference_i3_antic'] = real_values - predictions
+data['prediction_i3_antic'] = predictions_i3
+data['difference_i3_antic'] = real_values_i3 - predictions_i3
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.pdf"
-plot_differences_new(data, real_values, predictions, file_name=output_file)
-print('Succeded in evaluating CNN-I3 on the whole dataset to evaluate 2016')
+plot_differences_new(data, real_values_i3, predictions_i3, file_name=output_file)
+print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2016')
 
 
 # Evaluations of the CNN-I4 model on the whole dataset to evaluate 2016
 csv_file = "data/mass2016_cleaned_with_#.csv"
-model_path = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"  
+model_path_i4 = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"  
 data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
 
-model = CNN_I4().to(device)
-model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
-model.eval()
+model_i4 = CNN_I4().to(device)
+model_i4.load_state_dict(torch.load(model_path_i4, map_location=device, weights_only=True))
+model_i4.eval()
 
-real_values = []
-predictions = []
+real_values_i4 = []
+predictions_i4 = []
 
 for idx in range(len(data)):
     z_grid, n_grid, delta_I4_grid, data_feature_grid = create_5x5_neighborhood_i4(data, idx, data_feature)
     input_tensor = torch.tensor(np.array([np.stack([z_grid, n_grid, delta_I4_grid, data_feature_grid])]), dtype=torch.float32).to(device)
     real_value = data.iloc[idx][data_feature]
     with torch.no_grad():
-        predicted_value = model(input_tensor).item()
-    real_values.append(real_value)
-    predictions.append(predicted_value)
+        predicted_value = model_i4(input_tensor).item()
+    real_values_i4.append(real_value)
+    predictions_i4.append(predicted_value)
 
-real_values = np.array(real_values)
-predictions = np.array(predictions)
-rmse_global = np.sqrt(np.mean((real_values - predictions) ** 2))
+real_values_i4 = np.array(real_values_i4)
+predictions_i4 = np.array(predictions_i4)
+diff_i4 = real_values_i4 - predictions_i4
+rmse_global_i4 = np.sqrt(np.mean(diff_i4 ** 2))
 
-print(f"RMSE global I4: {rmse_global:.4f} MeV")
+print(f"RMSE global I4: {rmse_global_i4:.4f} MeV")
 
 data['bind_ene_total_antic'] = data['bind_ene_total']
-data['prediction_i4_antic'] = predictions
-data['difference_i4_antic'] = real_values - predictions
+data['prediction_i4_antic'] = predictions_i4
+data['difference_i4_antic'] = real_values_i4 - predictions_i4
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2016.pdf"
-plot_differences_new(data, real_values, predictions, file_name=output_file)
-print('Succeded in evaluating CNN-I4 on the whole dataset to evaluate 2016')
+plot_differences_new(data, real_values_i4, predictions_i4, file_name=output_file)
+print('Succeeded in evaluating CNN-I4 on the whole dataset to evaluate 2016')
+
+
+output_file_combined = "Tests new nuclei/combined_differences_plot_all_nuclei_2016.pdf"
+plot_differences_combined(data, diff_i3, data, diff_i4, df2016, diff_ldm, file_name=output_file_combined)
+print('Succeeded in creating the combined plot')
