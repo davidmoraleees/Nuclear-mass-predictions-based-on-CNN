@@ -5,7 +5,7 @@ import yaml
 import matplotlib.pyplot as plt
 from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
-from utils import plot_differences_new, plot_differences_combined, plot_data, evaluate_single_nucleus
+from utils import plot_differences_new, plot_differences_combined, evaluate_single_nucleus
 from utils import fontsizes
 import matplotlib.backends.backend_pdf as pdf
 
@@ -82,7 +82,7 @@ colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
 point_size = 90
 
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(10, 6))
 legend_labels = set()
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
@@ -101,7 +101,6 @@ for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
 plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
 plt.xlabel("N")
 plt.ylabel("Difference (MeV)")
-plt.legend()
 plt.xticks(ticks=range(156, 174, 2))
 plt.grid()
 plt.tight_layout()
@@ -164,7 +163,7 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(10, 6))
 legend_labels = set()
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
@@ -183,7 +182,6 @@ for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
 plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
 plt.xlabel("Z")
 plt.ylabel("Difference (MeV)")
-plt.legend()
 plt.xticks(ticks=range(110, 118, 2))
 plt.grid()
 plt.tight_layout()
