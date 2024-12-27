@@ -305,7 +305,7 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
     cbar2.set_label("(MeV)")
 
     plt.tight_layout()
-    plt.savefig(file_name)
+    plt.savefig(file_name, bbox_inches='tight')
     plt.close()
     return
 

@@ -80,9 +80,9 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-point_size = 90
+point_size = 130
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(8.45, 5.45))
 legend_labels = set()
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
@@ -104,7 +104,7 @@ plt.ylabel("Difference (MeV)")
 plt.xticks(ticks=range(156, 174, 2))
 plt.grid()
 plt.tight_layout()
-plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf")
+plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf",  bbox_inches='tight')
 plt.close()
 
 print('Succeeded in evaulating the Mt isotopic chain.')
@@ -163,7 +163,7 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(8.45, 5.45))
 legend_labels = set()
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
@@ -185,7 +185,7 @@ plt.ylabel("Difference (MeV)")
 plt.xticks(ticks=range(110, 118, 2))
 plt.grid()
 plt.tight_layout()
-plt.savefig("Tests new nuclei/N174_isotonic_chain.pdf")
+plt.savefig("Tests new nuclei/N174_isotonic_chain.pdf", bbox_inches='tight')
 plt.close()
 
 print('Succeeded in evaulating the N=174 isotonic chain.')

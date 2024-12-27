@@ -17,8 +17,8 @@ data:
 
 training:
   optimizer_name: Adamax
-  num_epochs: 300 # It has to be greater than plot_skipping_epochs
-  plot_skipping_epochs: 200
+  num_epochs: 3000000 # It has to be greater than plot_skipping_epochs
+  plot_skipping_epochs: 2000
   learning_rate: 0.002 # Default value
   patience: 5000
 

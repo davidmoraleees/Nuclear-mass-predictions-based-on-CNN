@@ -33,3 +33,17 @@ Best test RMSE: 80.0596 MeV, Best test epoch: 300
 Execution ended at: 2024-12-23 10:57:33
 
 
+Model trained: CNN-I3
+Execution started at: 2024-12-25 12:13:31
+Best train RMSE: 0.3747 MeV, Best train epoch: 425878
+Best test RMSE: 0.5837 MeV, Best test epoch: 420906
+Execution ended at: 2024-12-25 15:36:07
+
+
+Model trained: CNN-I3
+Execution started at: 2024-12-25 15:36:11
+Best train RMSE: 0.3571 MeV, Best train epoch: 238878
+Best test RMSE: 0.6667 MeV, Best test epoch: 233896
+Execution ended at: 2024-12-25 17:28:58
+
+
