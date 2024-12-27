@@ -41,6 +41,12 @@ The `config.yaml` file contains configuration settings for the project, includin
 
 ## Usage
 
+## Installing requirements
+In order to run the scripts of the repository, you should download the necessary packages by running:
+```sh
+pip install -r requirements.txt
+```
+
 ### Data Processing
 To process the raw data files and generate cleaned datasets, run the `data_processing.py` script:
 ```sh
