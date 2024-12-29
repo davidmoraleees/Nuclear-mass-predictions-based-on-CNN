@@ -1,4 +1,6 @@
-# Nuclear mass predictions based on convolutional networks
+# Nuclear mass predictions based on convolutional neural networks
+This project is still in progress, so it's not finished yet.
+
 
 This repository contains code and data for predicting nuclear masses using convolutional neural networks (CNNs). The project involves data processing, model training, and evaluation of predictions. This project was developed by [David Morales](https://www.linkedin.com/in/david-morales-361b41282/) and supervised by [Arnau Rios](https://www.linkedin.com/in/arnau-rios-huguet/).
 

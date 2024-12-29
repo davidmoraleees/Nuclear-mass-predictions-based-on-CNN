@@ -259,35 +259,35 @@ def plot_differences_new(data, real_values, predictions, file_name):
 
 def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff_ldm, file_name):
 
-    fig, axes = plt.subplots(3, 1, figsize=(10, 20), gridspec_kw={'height_ratios': [1, 1, 1], 'hspace': 0.3})
+    fig, axes = plt.subplots(2, 1, figsize=(10, 16), gridspec_kw={'height_ratios': [1, 1], 'hspace': 0.3})
     
-    vmin_ldm = -14
-    vmax_ldm = 14
-    vcenter_ldm = 0 if vmin_ldm < 0 and vmax_ldm > 0 else (vmin_ldm + vmax_ldm) / 2
-    norm_ldm = TwoSlopeNorm(vmin=vmin_ldm, vcenter=vcenter_ldm, vmax=vmax_ldm)
+    #vmin_ldm = -14
+    #vmax_ldm = 14
+    #vcenter_ldm = 0 if vmin_ldm < 0 and vmax_ldm > 0 else (vmin_ldm + vmax_ldm) / 2
+    #norm_ldm = TwoSlopeNorm(vmin=vmin_ldm, vcenter=vcenter_ldm, vmax=vmax_ldm)
 
     vmin_cnn = -6
     vmax_cnn = 6
     vcenter_cnn = 0 if vmin_cnn < 0 and vmax_cnn > 0 else (vmin_cnn + vmax_cnn) / 2
     norm_cnn = TwoSlopeNorm(vmin=vmin_cnn, vcenter=vcenter_cnn, vmax=vmax_cnn)
 
-    scatter1 = axes[0].scatter(data_ldm['N'], data_ldm['Z'], c=diff_ldm*(-1),
-                                cmap='seismic', norm=norm_ldm, edgecolor='None', s=12)
-    axes[0].set_title("LDM")
+    #scatter1 = axes[0].scatter(data_ldm['N'], data_ldm['Z'], c=diff_ldm*(-1),
+    #                            cmap='seismic', norm=norm_ldm, edgecolor='None', s=12)
+    #axes[0].set_title("LDM")
+    #axes[0].set_xlabel("N")
+    #axes[0].set_ylabel("Z")
+
+    scatter1 = axes[0].scatter(data_i3['N'], data_i3['Z'], c=diff_i3*(-1),
+                                cmap='seismic', norm=norm_cnn, edgecolor='None', s=12)
+    axes[0].set_title("CNN-I3")
     axes[0].set_xlabel("N")
     axes[0].set_ylabel("Z")
 
-    scatter2 = axes[1].scatter(data_i3['N'], data_i3['Z'], c=diff_i3*(-1),
+    scatter2 = axes[1].scatter(data_i4['N'], data_i4['Z'], c=diff_i4*(-1),
                                 cmap='seismic', norm=norm_cnn, edgecolor='None', s=12)
-    axes[1].set_title("CNN-I3")
+    axes[1].set_title("CNN-I4")
     axes[1].set_xlabel("N")
     axes[1].set_ylabel("Z")
-
-    scatter3 = axes[2].scatter(data_i4['N'], data_i4['Z'], c=diff_i4*(-1),
-                                cmap='seismic', norm=norm_cnn, edgecolor='None', s=12)
-    axes[2].set_title("CNN-I4")
-    axes[2].set_xlabel("N")
-    axes[2].set_ylabel("Z")
 
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for ax in axes:
@@ -298,13 +298,14 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
         ax.set_yticks(magic_numbers)
         ax.grid(alpha=0.3)
 
-    cbar1 = fig.colorbar(scatter1, ax=axes[0], orientation='vertical', fraction=0.08)
+    #cbar1 = fig.colorbar(scatter1, ax=axes[0], orientation='vertical', fraction=0.08)
+    #cbar1.set_label("(MeV)")
+
+    cbar1 = fig.colorbar(scatter1, ax=axes.ravel().tolist(), orientation='horizontal', fraction=0.03, shrink=0.5, pad=0.07)
     cbar1.set_label("(MeV)")
+    cbar1.set_ticks([vmin_cnn, vmin_cnn/2, vcenter_cnn, vmax_cnn/2, vmax_cnn])
 
-    cbar2 = fig.colorbar(scatter2, ax=axes[1:], orientation='vertical', fraction=0.08, shrink=0.5)
-    cbar2.set_label("(MeV)")
-
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(file_name, bbox_inches='tight')
     plt.close()
     return
@@ -426,7 +427,7 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
 
 
 def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 8))
 
     if vmin is None:
         vmin = df[df_column].min()
@@ -435,10 +436,14 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     if vcenter is None:
         vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
 
+    vmin = -14
+    vcenter = 0
+    vmax = 14
     norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-    scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=12)
-    cbar = plt.colorbar(scatter)
+    scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=14)
+    cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
     cbar.set_label(colorbar_label)
+    cbar.set_ticks([vmin, -7, 0, 7, vmax])
 
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:
@@ -449,6 +454,6 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z') 
-    plt.savefig(os.path.join(folder, filename))
+    plt.savefig(os.path.join(folder, filename), bbox_inches='tight')
     plt.close()
     return

@@ -13,11 +13,13 @@ with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 fontsizes(config)
+model_path_i3 = "Tests new nuclei/cnn_i3_best_model_5e-05_prova.pt"  
+model_path_i4 = "Tests new nuclei/cnn_i4_best_model_5e-05_prova.pt"  
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 csv_file = "data/mass2020_cleaned_with_#.csv"
 new_nuclei_file = "data/df2016_2020_yesyes.csv"  
-model_path = "Tests new nuclei/cnn_i3_best_model_1e-05.pt"  
+model_path = model_path_i4
 data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
@@ -192,6 +194,7 @@ print('Succeeded in evaulating the N=174 isotonic chain.')
 
 
 # Evaluations of the CNN-I3 model on the whole dataset to evaluate 2020
+model_path = model_path_i3
 model = CNN_I3().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 model.eval()
@@ -237,7 +240,7 @@ print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2020')
 
 
 # Evaluations of the CNN-I4 on the whole dataset to evauluate 2020
-model_path = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"   
+model_path = model_path_i4
 model = CNN_I4().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 model.eval()
@@ -282,17 +285,8 @@ plot_differences_new(new_nuclei, real_values_new, predictions_new, file_name=out
 print('Succeeded in evaluating CNN-I4 on the whole dataset to evaluate 2020')
 
 
-
-
-file = "data/mass2016_cleaned_with_#.csv"
-df2016 = pd.read_csv(file, delimiter=';')
-
-diff_ldm = df2016['Diff_bind_ene_total']
-
-
 # Evaluations of the CNN-I3 model on the whole dataset to evaluate 2016
 csv_file = "data/mass2016_cleaned_with_#.csv"
-model_path_i3 = "Tests new nuclei/cnn_i3_best_model_1e-05.pt"  
 data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
@@ -331,8 +325,12 @@ print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2016')
 
 
 # Evaluations of the CNN-I4 model on the whole dataset to evaluate 2016
+file = "data/mass2016_cleaned_with_#.csv"
+df2016 = pd.read_csv(file, delimiter=';')
+
+diff_ldm = df2016['Diff_bind_ene_total']
+
 csv_file = "data/mass2016_cleaned_with_#.csv"
-model_path_i4 = "Tests new nuclei/cnn_i4_best_model_1e-05.pt"  
 data_feature = config['data']['data_feature'] 
 
 data = pd.read_csv(csv_file, delimiter=';')
