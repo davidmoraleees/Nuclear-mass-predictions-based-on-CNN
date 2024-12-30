@@ -45,6 +45,9 @@ dfWS4['bind_ene_total_ws4'] = (dfWS4['Z,'].astype(int)*m_H + dfWS4['N']*m_n) - d
 dfWS4['Z'] = dfWS4['Z,']
 dfWS4['A'] = dfWS4['A,']
 dfWS4[['A', 'Z', 'N']] = dfWS4[['A', 'Z', 'N']].astype(int)
+dfWS4 = dfWS4.drop(columns=['A,', 'Z,'])
+dfWS4['B_e'] = (14.4381*(dfWS4['Z']**2.39) + 1.55468*(10**-6)*(dfWS4['Z']**5.35)) * (10**-6) # MeV
+dfWS4['M_N_ws4'] = dfWS4['atomic_mass_ws4'] - dfWS4['Z']*m_e + dfWS4['B_e'] # MeV
 dfWS4.to_csv(f'{data_folder}/WS4_cleaned.csv', index=False, header=True, sep=';')
 
 
@@ -120,6 +123,22 @@ header_2016 = 31
 df2020 = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, remove_hashtags)
 df2016 = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, remove_hashtags)
 
+# Merging M_N_ws4 to AME2016 and AME2020 datasets
+file_2016 = f"{data_folder}/mass2016_cleaned_with_#.csv"
+file_2020 = f"{data_folder}/mass2020_cleaned_with_#.csv"
+
+df2016 = pd.read_csv(file_2016, sep=";")
+df2020 = pd.read_csv(file_2020, sep=";")
+
+df2016 = df2016.merge(dfWS4[['Z', 'N', 'M_N_ws4']], on=['Z', 'N'], how='left')
+df2020 = df2020.merge(dfWS4[['Z', 'N', 'M_N_ws4']], on=['Z', 'N'], how='left')
+
+df2016['WS4_diff'] = df2016['M_N_exp'] - df2016['M_N_ws4']
+df2020['WS4_diff'] = df2020['M_N_exp'] - df2020['M_N_ws4']
+
+df2016.to_csv(file_2016, sep=";", index=False)
+df2020.to_csv(file_2020, sep=";", index=False)
+
 
 def calculate_rmse(df, metrics):
     for metric in metrics:
@@ -132,7 +151,8 @@ metrics = [
     {'column': 'Diff_atomic_mass', 'label': 'RMSE between atomic masses in AME2016 and calculated ones', 'unit': 'MeV'},
     {'column': 'Diff_mass_excess', 'label': 'RMSE between mass excess from AME and calculated ones', 'unit': 'keV'},
     {'column': 'Diff_bind_ene_calcs', 'label': 'RMSE between binding energies per nucleon in AME2016 and calculated ones', 'unit': 'MeV'},
-    {'column': 'Diff_nuclear_mass', 'label': 'RMSE liquid droplet model (2016) nuclear masses', 'unit': 'MeV'},]
+    {'column': 'Diff_nuclear_mass', 'label': 'RMSE liquid droplet model (2016) nuclear masses', 'unit': 'MeV'},
+    {'column': 'WS4_diff', 'label': 'RMSE between nuclear masses in AME2016 and WS4', 'unit': 'MeV'}]
 
 calculate_rmse(df2016, metrics)
 
@@ -177,8 +197,8 @@ plot_data(df2016, 'M_N_teo', '(MeV)',
           'nuclear_mass_teo.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
-plot_data(df2016, 'Diff_nuclear_mass', '(MeV)',
-          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic')
+plot_data(df2016, 'Diff_nuclear_mass', r'$M_N^{\text{exp}} - M_N^{\text{pred}}$ (MeV)',
+          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14)
 
 #3D plot of the difference between theoretical and experimental binding energies per nucleon
 fig = plt.figure(figsize=(10, 6))

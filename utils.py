@@ -23,6 +23,9 @@ def fontsizes(config):
         'ytick.labelsize': config['fontsizes']['ytick_labelsize'],
         'legend.fontsize': config['fontsizes']['legend_fontsize'],
         'figure.titlesize': config['fontsizes']['figure_title_size'],
+        'font.family': 'serif',  # Fuente serif
+        'font.serif': ['STIX', 'Times New Roman', 'DejaVu Serif'],  # Fuentes de reserva
+        'mathtext.fontset': 'stix',
     })
     return
 
@@ -302,7 +305,7 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
     #cbar1.set_label("(MeV)")
 
     cbar1 = fig.colorbar(scatter1, ax=axes.ravel().tolist(), orientation='horizontal', fraction=0.03, shrink=0.5, pad=0.07)
-    cbar1.set_label("(MeV)")
+    cbar1.set_label(r'$M_N^{\text{exp}} - M_N^{\text{pred}}$ (MeV)')
     cbar1.set_ticks([vmin_cnn, vmin_cnn/2, vcenter_cnn, vmax_cnn/2, vmax_cnn])
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
@@ -436,14 +439,10 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     if vcenter is None:
         vcenter = 0 if vmin < 0 and vmax > 0 else (vmin + vmax) / 2
 
-    vmin = -14
-    vcenter = 0
-    vmax = 14
     norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
     scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=14)
     cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
     cbar.set_label(colorbar_label)
-    cbar.set_ticks([vmin, -7, 0, 7, vmax])
 
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:

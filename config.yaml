@@ -39,10 +39,10 @@ kfolding:
   n_splits: 5
 
 fontsizes:
-  font_size: 18
-  axes_title_size: 20
-  axes_label_size: 18
-  xtick_labelsize: 16
-  ytick_labelsize: 16
-  legend_fontsize: 16
-  figure_title_size: 22
+  font_size: 24
+  axes_title_size: 24
+  axes_label_size: 24
+  xtick_labelsize: 24
+  ytick_labelsize: 24
+  legend_fontsize: 24
+  figure_title_size: 24

@@ -84,7 +84,7 @@ colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
 point_size = 130
 
-plt.figure(figsize=(8.45, 5.45))
+plt.figure(figsize=(8.5, 6))
 legend_labels = set()
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     model_data = results_df[results_df["Model"] == model_name]
@@ -165,7 +165,7 @@ results_df.to_csv(output_csv_file, sep=";", index=False)
 
 colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
 markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
-plt.figure(figsize=(8.45, 5.45))
+plt.figure(figsize=(8.5, 6))
 legend_labels = set()
 
 for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
