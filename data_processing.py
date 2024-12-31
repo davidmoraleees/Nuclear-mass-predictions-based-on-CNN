@@ -101,10 +101,6 @@ def process_file(filename, header, widths, columns, column_names, year, remove):
     df['M_N_exp'] = df['atomic_mass'] - Z*m_e + df['B_e']  # MeV
     df['Diff_nuclear_mass'] = df['M_N_exp'] - df['M_N_teo']  # MeV
     
-    if remove:
-        df.to_csv(f'{data_folder}/mass{year}_cleaned_without_#.csv', sep=';', index=False)
-    else:
-        df.to_csv(f'{data_folder}/mass{year}_cleaned_with_#.csv', sep=';', index=False)
     return df
 
 columns_2020 = (1, 2, 3, 4, 6, 9, 10, 11, 13, 16, 17, 19, 21, 22)
@@ -122,6 +118,13 @@ header_2016 = 31
 
 df2020 = process_file(f'{data_folder}/mass2020.txt', header_2020, widths_2020, columns_2020, column_names_2020, 2020, remove_hashtags)
 df2016 = process_file(f'{data_folder}/mass2016.txt', header_2016, widths_2016, columns_2016, column_names_2016, 2016, remove_hashtags)
+
+if remove_hashtags:
+    df2016.to_csv(f'{data_folder}/mass{2016}_cleaned_without_#.csv', sep=';', index=False)
+    df2020.to_csv(f'{data_folder}/mass{2020}_cleaned_without_#.csv', sep=';', index=False)
+else:
+    df2016.to_csv(f'{data_folder}/mass{2016}_cleaned_with_#.csv', sep=';', index=False)
+    df2020.to_csv(f'{data_folder}/mass{2020}_cleaned_with_#.csv', sep=';', index=False)
 
 # Merging M_N_ws4 to AME2016 and AME2020 datasets
 file_2016 = f"{data_folder}/mass2016_cleaned_with_#.csv"
@@ -197,8 +200,13 @@ plot_data(df2016, 'M_N_teo', '(MeV)',
           'nuclear_mass_teo.pdf', data_processing_plots, cmap='seismic')
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
-plot_data(df2016, 'Diff_nuclear_mass', r'$M_N^{\text{exp}} - M_N^{\text{pred}}$ (MeV)',
+plot_data(df2016, 'Diff_nuclear_mass', r'$\Delta$ (MeV)',
           'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14)
+
+#Plot of the difference between nuclear mass calculated and the one from WS4 model    
+plot_data(df2016, 'WS4_diff', r'$\Delta$ (MeV)',
+          'nuclear_mass_expws4_dif.pdf', data_processing_plots, cmap='seismic')
+
 
 #3D plot of the difference between theoretical and experimental binding energies per nucleon
 fig = plt.figure(figsize=(10, 6))
@@ -271,13 +279,6 @@ plot_shell_gaps(df2016, 'delta_2n', 'teo', 'neutron_shell_gaps_teo.pdf', data_pr
 plot_shell_gaps(df2016, 'delta_2p', 'teo', 'proton_shell_gaps_teo.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
                     
-
-df2016[['A', 'Z', 'N']] = df2016[['A', 'Z', 'N']].astype(int)
-df2020[['A', 'Z', 'N']] = df2020[['A', 'Z', 'N']].astype(int)
-df_merged = pd.merge(df2016, dfWS4[['A', 'Z', 'N', 'bind_ene_total_ws4']], on=['A', 'Z', 'N'], how='left')
-df_merged['Diff_bind_ene_ws4'] = df_merged['bind_ene_total'] - df_merged['bind_ene_total_ws4']
-df_merged.to_csv(f'{data_folder}/mass2016_with_ws4.csv', sep=';', index=False)
-
 
 def calculate_difference(df1, df2, output_file):
     diff = df1.merge(df2, on=['Z', 'N'], how='left', indicator=True, suffixes=('', '_other'))

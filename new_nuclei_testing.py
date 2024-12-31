@@ -7,7 +7,7 @@ from models import CNN_I3, CNN_I4
 from utils import create_5x5_neighborhood_i3, create_5x5_neighborhood_i4
 from utils import plot_differences_new, plot_differences_combined, evaluate_single_nucleus
 from utils import fontsizes
-import matplotlib.backends.backend_pdf as pdf
+from matplotlib.lines import Line2D
 
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -43,7 +43,7 @@ aA = config['LDM']['aA']
 ap = config['LDM']['ap']
 
 color_limits_storage = {}
-color_limits_storage['color_limits'] = (-6, 0, 6)
+color_limits_storage['color_limits'] = (-3, 0, 3)
 
 results = []
 
@@ -74,19 +74,37 @@ for n_value, z_value in nuclei_to_evaluate:
                         "Predicted Value (MeV)": ldm_mass, "Difference (MeV)": ldm_difference, 
                         "Model": "LDM"})
 
+for n_value, z_value in nuclei_to_evaluate:
+    real_value = data.loc[(data['N'] == n_value) & (data['Z'] == z_value), data_feature].values
+    ws4_difference = data.loc[(data['N'] == n_value) & (data['Z'] == z_value), 'WS4_diff'].values
+    if (ws4_difference.size > 0) and (real_value.size > 0):
+        ws4_difference = ws4_difference[0]
+        real_value = real_value[0]
+
+    results.append({"N": n_value, "Z": z_value, "Real Value (MeV)": real_value, 
+                    "Difference (MeV)": ws4_difference * (-1), 
+                    "Model": "WS4"})  
+
+
 results_df = pd.DataFrame(results)
 new_nuclei_set = set(zip(new_nuclei['N'], new_nuclei['Z']))
 results_df['In 2020?'] = results_df.apply(lambda row: (row['N'], row['Z']) in new_nuclei_set, axis=1)
 output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
-colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
-markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
+colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green", "WS4": "purple"}
+markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s", "WS4": "v"}
 point_size = 130
 
 plt.figure(figsize=(8.5, 6))
 legend_labels = set()
-for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
+
+y_min = np.floor((results_df["Difference (MeV)"] * (-1)).min())
+y_max = np.ceil((results_df["Difference (MeV)"] * (-1)).max())
+tick_interval = 2
+y_ticks = np.arange(y_min, y_max + tick_interval, tick_interval)
+
+for model_name in ["CNN-I3", "CNN-I4", "LDM", "WS4"]:
     model_data = results_df[results_df["Model"] == model_name]
 
     filled_points = model_data[~model_data["N"].isin([171, 172, 173])]
@@ -100,11 +118,20 @@ for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
     plt.plot(model_data["N"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
     # We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
 
-plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+plt.axhline(0, color='black', linewidth=2.5, linestyle='-')
 plt.xlabel("N")
-plt.ylabel("Difference (MeV)")
+plt.ylabel(r'$\Delta$ (MeV)')
 plt.xticks(ticks=range(156, 174, 2))
+plt.ylim(y_min-0.5, y_max+0.5)
+plt.yticks(ticks=y_ticks)
 plt.grid()
+legend_elements = [
+    Line2D([0], [0], marker=markers["CNN-I3"], color=colors["CNN-I3"], markersize=10, label="CNN-I3", linestyle="None"),
+    Line2D([0], [0], marker=markers["CNN-I4"], color=colors["CNN-I4"], markersize=10, label="CNN-I4", linestyle="None"),
+    Line2D([0], [0], marker=markers["LDM"], color=colors["LDM"], markersize=10, label="LDM", linestyle="None"),
+    Line2D([0], [0], marker=markers["WS4"], color=colors["WS4"], markersize=10, label="WS4", linestyle="None"),
+]
+plt.legend(handles=legend_elements, loc="upper left", handletextpad=0.01)
 plt.tight_layout()
 plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf",  bbox_inches='tight')
 plt.close()
@@ -156,6 +183,17 @@ for n_value, z_value in nuclei_to_evaluate:
         results.append({"N": n_value, "Z": z_value, "Real Value (MeV)": real_value, 
                         "Predicted Value (MeV)": ldm_mass, "Difference (MeV)": ldm_difference, 
                         "Model": "LDM"})
+        
+for n_value, z_value in nuclei_to_evaluate:
+    real_value = data.loc[(data['N'] == n_value) & (data['Z'] == z_value), data_feature].values
+    ws4_difference = data.loc[(data['N'] == n_value) & (data['Z'] == z_value), 'WS4_diff'].values
+    if (ws4_difference.size > 0) and (real_value.size > 0):
+        ws4_difference = ws4_difference[0]
+        real_value = real_value[0]
+
+    results.append({"N": n_value, "Z": z_value, "Real Value (MeV)": real_value, 
+                    "Difference (MeV)": ws4_difference * (-1), 
+                    "Model": "WS4"})  
 
 results_df = pd.DataFrame(results)
 new_nuclei_set = set(zip(new_nuclei['N'], new_nuclei['Z']))
@@ -163,12 +201,17 @@ results_df['In 2020?'] = results_df.apply(lambda row: (row['N'], row['Z']) in ne
 output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
-colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green"}
-markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s"}
+colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green", "WS4": "purple"}
+markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s", "WS4": "v"}
 plt.figure(figsize=(8.5, 6))
 legend_labels = set()
 
-for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
+y_min = np.floor((results_df["Difference (MeV)"] * (-1)).min())
+y_max = np.ceil((results_df["Difference (MeV)"] * (-1)).max())
+tick_interval = 2
+y_ticks = np.arange(y_min, y_max + tick_interval, tick_interval)
+
+for model_name in ["CNN-I3", "CNN-I4", "LDM", "WS4"]:
     model_data = results_df[results_df["Model"] == model_name]
 
     filled_points = model_data[~model_data["Z"].isin([110, 111, 112])]
@@ -181,11 +224,20 @@ for model_name in ["CNN-I3", "CNN-I4", "LDM"]:
 
     plt.plot(model_data["Z"], model_data["Difference (MeV)"] * (-1), color=colors[model_name], linestyle='-', linewidth=1.5)
 
-plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+plt.axhline(0, color='black', linewidth=2.5, linestyle='-')
 plt.xlabel("Z")
-plt.ylabel("Difference (MeV)")
+plt.ylabel(r'$\Delta$ (MeV)')
 plt.xticks(ticks=range(110, 118, 2))
+plt.ylim(y_min-0.5, y_max+0.5)
+plt.yticks(ticks=y_ticks)
 plt.grid()
+legend_elements = [
+    Line2D([0], [0], marker=markers["CNN-I3"], color=colors["CNN-I3"], markersize=10, label="CNN-I3", linestyle="None"),
+    Line2D([0], [0], marker=markers["CNN-I4"], color=colors["CNN-I4"], markersize=10, label="CNN-I4", linestyle="None"),
+    Line2D([0], [0], marker=markers["LDM"], color=colors["LDM"], markersize=10, label="LDM", linestyle="None"),
+    Line2D([0], [0], marker=markers["WS4"], color=colors["WS4"], markersize=10, label="WS4", linestyle="None"),
+]
+plt.legend(handles=legend_elements, loc="upper left", bbox_to_anchor=(0, 0.8), handletextpad=0.01)
 plt.tight_layout()
 plt.savefig("Tests new nuclei/N174_isotonic_chain.pdf", bbox_inches='tight')
 plt.close()

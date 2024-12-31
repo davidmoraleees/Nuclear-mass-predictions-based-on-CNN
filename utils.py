@@ -245,7 +245,7 @@ def plot_differences_new(data, real_values, predictions, file_name):
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff']*(-1),
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
     cbar = plt.colorbar(scatter)
-    cbar.set_label('(MeV)')
+    cbar.set_label(r'$\Delta$ (MeV)')
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:
         plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
@@ -269,8 +269,8 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
     #vcenter_ldm = 0 if vmin_ldm < 0 and vmax_ldm > 0 else (vmin_ldm + vmax_ldm) / 2
     #norm_ldm = TwoSlopeNorm(vmin=vmin_ldm, vcenter=vcenter_ldm, vmax=vmax_ldm)
 
-    vmin_cnn = -6
-    vmax_cnn = 6
+    vmin_cnn = -3
+    vmax_cnn = 3
     vcenter_cnn = 0 if vmin_cnn < 0 and vmax_cnn > 0 else (vmin_cnn + vmax_cnn) / 2
     norm_cnn = TwoSlopeNorm(vmin=vmin_cnn, vcenter=vcenter_cnn, vmax=vmax_cnn)
 
@@ -305,8 +305,9 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
     #cbar1.set_label("(MeV)")
 
     cbar1 = fig.colorbar(scatter1, ax=axes.ravel().tolist(), orientation='horizontal', fraction=0.03, shrink=0.5, pad=0.07)
-    cbar1.set_label(r'$M_N^{\text{exp}} - M_N^{\text{pred}}$ (MeV)')
+    cbar1.set_label(r'$\Delta$ (MeV)')
     cbar1.set_ticks([vmin_cnn, vmin_cnn/2, vcenter_cnn, vmax_cnn/2, vmax_cnn])
+    cbar1.set_ticklabels([vmin_cnn.astype(int), vmin_cnn/2, vcenter_cnn.astype(int), vmax_cnn/2, vmax_cnn.astype(int)])
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(file_name, bbox_inches='tight')
