@@ -224,14 +224,14 @@ def evaluate_single_nucleus(data, model, n_value, z_value, data_feature, neighbo
     return real_value, predicted_value, difference
 
 
-def plot_differences_new(data, real_values, predictions, file_name):
+def plot_differences_new(data, real_values, predictions, file_name, title_name=None):
     diff = real_values - predictions
     scatter_data = pd.DataFrame({
         'N': data['N'],
         'Z': data['Z'],
         'diff': diff
     })
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 8))
 
     if 'color_limits' not in color_limits_storage:
         vmin = scatter_data['diff'].min()
@@ -241,11 +241,18 @@ def plot_differences_new(data, real_values, predictions, file_name):
     else:
         vmin, vcenter, vmax = color_limits_storage['color_limits']
 
+    vmin = -3
+    vcenter = 0
+    vmax = 3
+
     norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
     scatter = plt.scatter(scatter_data['N'], scatter_data['Z'], c=scatter_data['diff']*(-1),
                           cmap='seismic', norm=norm, edgecolor='None', s=12)
-    cbar = plt.colorbar(scatter)
+    cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
+    cbar.set_ticks([vmin, vmin/2, vcenter, vmax/2, vmax])
+    cbar.set_ticklabels([f"{vmin:.0f}", f"{vmin/2:.0f}", f"{vcenter:.0f}", f"{vmax/2:.0f}", f"{vmax:.0f}"])
     cbar.set_label(r'$\Delta$ (MeV)')
+
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:
         plt.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
@@ -254,8 +261,9 @@ def plot_differences_new(data, real_values, predictions, file_name):
     plt.yticks(magic_numbers)
     plt.xlabel('N')
     plt.ylabel('Z')
+    plt.title(title_name)
     rmse = np.sqrt(np.mean(diff**2))
-    plt.savefig(file_name)
+    plt.savefig(file_name, bbox_inches='tight')
     plt.close()
     return
 
