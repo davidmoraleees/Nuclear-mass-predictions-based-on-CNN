@@ -307,9 +307,8 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
     cbar1 = fig.colorbar(scatter1, ax=axes.ravel().tolist(), orientation='horizontal', fraction=0.03, shrink=0.5, pad=0.07)
     cbar1.set_label(r'$\Delta$ (MeV)')
     cbar1.set_ticks([vmin_cnn, vmin_cnn/2, vcenter_cnn, vmax_cnn/2, vmax_cnn])
-    cbar1.set_ticklabels([vmin_cnn.astype(int), vmin_cnn/2, vcenter_cnn.astype(int), vmax_cnn/2, vmax_cnn.astype(int)])
-
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    cbar1.set_ticklabels([f"{vmin_cnn:.0f}", f"{vmin_cnn/2}", f"{vcenter_cnn:.0f}", f"{vmax_cnn/2}", f"{vmax_cnn:.0f}"])
+    
     plt.savefig(file_name, bbox_inches='tight')
     plt.close()
     return
@@ -399,13 +398,15 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
     save_model(model, folder, best_model_state, best_test_rmse, best_epoch_test, num_epochs, model_name, lr_name)
 
     end_time = datetime.datetime.now()
-    end_time_str = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time_str = end_time.strftime('%H:%M:%S %d/%m/%Y')
 
-    result_filename = f"{folder}/training_results_{model_name}.txt"
+    logs_filename = f"{folder}/training_logs_{model_name}.txt"
     
-    with open(result_filename, 'a') as f:
-        f.write(f"Model trained: CNN-{model_name}\n")
+    with open(logs_filename, 'a') as f:
         f.write(f"Execution started at: {start_time_str}\n")
+        f.write(f"Model trained: CNN-{model_name}\n")
+        f.write(f"Optimizer: {optimizer_name}, Learning rate: {learning_rate}\n")
+        f.write(f"Predefined number of epochs: {num_epochs}, Patience: {patience}\n")
         f.write(f"Best train RMSE: {best_train_rmse:.4f} MeV, Best train epoch: {best_epoch_train}\n")
         f.write(f"Best test RMSE: {best_test_rmse:.4f} MeV, Best test epoch: {best_epoch_test}\n")
         f.write(f"Execution ended at: {end_time_str}\n\n\n")
@@ -444,6 +445,10 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     scatter = plt.scatter(df['N'], df['Z'], c=df[df_column], cmap=cmap, norm=norm, edgecolor='None', s=14)
     cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
     cbar.set_label(colorbar_label)
+
+    if filename == 'nuclear_mass_expteo_dif.pdf':
+        cbar.set_ticks([vmin, vmin/2, vcenter, vmax/2, vmax])
+        cbar.set_ticklabels([f"{vmin:.0f}", f"{vmin/2:.0f}", f"{vcenter:.0f}", f"{vmax/2:.0f}", f"{vmax:.0f}"])
 
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:

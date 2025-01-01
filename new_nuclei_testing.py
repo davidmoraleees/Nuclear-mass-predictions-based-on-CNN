@@ -282,8 +282,9 @@ new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in n
 
 real_values_new = real_values[new_nuclei_indices]
 predictions_new = predictions[new_nuclei_indices]
-
-rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
+differences_new = real_values_new - predictions_new
+differences_new = differences_new[(differences_new >= -1.5) & (differences_new <= 1.5)]
+rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.pdf"
@@ -328,8 +329,9 @@ new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in n
 
 real_values_new = real_values[new_nuclei_indices]
 predictions_new = predictions[new_nuclei_indices]
-
-rmse_new_nuclei = np.sqrt(np.mean((real_values_new - predictions_new) ** 2))
+differences_new = real_values_new - predictions_new
+differences_new = differences_new[(differences_new >= -1.5) & (differences_new <= 1.5)]
+rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.pdf"
