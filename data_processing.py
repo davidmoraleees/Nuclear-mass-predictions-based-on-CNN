@@ -201,7 +201,7 @@ plot_data(df2016, 'M_N_teo', '(MeV)',
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
 plot_data(df2016, 'Diff_nuclear_mass', r'$\Delta$ (MeV)',
-          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14)
+          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14, title_name='LDM')
 
 #Plot of the difference between nuclear mass calculated and the one from WS4 model    
 plot_data(df2016, 'WS4_diff', r'$\Delta$ (MeV)',

@@ -290,13 +290,13 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
 
     scatter1 = axes[0].scatter(data_i3['N'], data_i3['Z'], c=diff_i3*(-1),
                                 cmap='seismic', norm=norm_cnn, edgecolor='None', s=12)
-    axes[0].set_title("CNN-I3")
+    axes[0].set_title("I3")
     axes[0].set_xlabel("N")
     axes[0].set_ylabel("Z")
 
     scatter2 = axes[1].scatter(data_i4['N'], data_i4['Z'], c=diff_i4*(-1),
                                 cmap='seismic', norm=norm_cnn, edgecolor='None', s=12)
-    axes[1].set_title("CNN-I4")
+    axes[1].set_title("I4")
     axes[1].set_xlabel("N")
     axes[1].set_ylabel("Z")
 
@@ -439,7 +439,7 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         return
 
 
-def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None):
+def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None, title_name=None):
     plt.figure(figsize=(10, 8))
 
     if vmin is None:
@@ -466,7 +466,8 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     plt.xticks(magic_numbers)
     plt.yticks(magic_numbers)
     plt.xlabel('N')
-    plt.ylabel('Z') 
+    plt.ylabel('Z')
+    plt.title(title_name) 
     plt.savefig(os.path.join(folder, filename), bbox_inches='tight')
     plt.close()
     return

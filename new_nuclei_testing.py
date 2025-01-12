@@ -32,8 +32,8 @@ n_range = range(156, 174)
 nuclei_to_evaluate = [(n_value, z_value) for n_value in n_range]
 
 models_config = [
-    {"name": "CNN-I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
-    {"name": "CNN-I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
+    {"name": "I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
+    {"name": "I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
 ]
 
 av = config['LDM']['av']
@@ -92,8 +92,8 @@ results_df['In 2020?'] = results_df.apply(lambda row: (row['N'], row['Z']) in ne
 output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
-colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green", "WS4": "purple"}
-markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s", "WS4": "v"}
+colors = {"I3": "blue", "I4": "red", "LDM": "green", "WS4": "purple"}
+markers = {"I3": "o", "I4": "^", "LDM": "s", "WS4": "v"}
 point_size = 130
 
 plt.figure(figsize=(10, 6))
@@ -104,7 +104,7 @@ y_max = np.ceil((results_df["Difference (MeV)"] * (-1)).max())
 tick_interval = 2
 y_ticks = np.arange(y_min, y_max + tick_interval, tick_interval)
 
-for model_name in ["CNN-I3", "CNN-I4", "LDM", "WS4"]:
+for model_name in ["I3", "I4", "LDM", "WS4"]:
     model_data = results_df[results_df["Model"] == model_name]
 
     filled_points = model_data[~model_data["N"].isin([171, 172, 173])]
@@ -125,10 +125,11 @@ plt.xticks(ticks=range(156, 176, 2))
 plt.ylim(y_min-0.5, y_max+0.5)
 plt.xlim(155, 175)
 plt.yticks(ticks=y_ticks)
+plt.title('Mt isotopic chain (Z=109)')
 plt.grid()
 legend_elements = [
-    Line2D([0], [0], marker=markers["CNN-I3"], color=colors["CNN-I3"], markersize=10, label="CNN-I3", linestyle="None"),
-    Line2D([0], [0], marker=markers["CNN-I4"], color=colors["CNN-I4"], markersize=10, label="CNN-I4", linestyle="None"),
+    Line2D([0], [0], marker=markers["I3"], color=colors["I3"], markersize=10, label="I3", linestyle="None"),
+    Line2D([0], [0], marker=markers["I4"], color=colors["I4"], markersize=10, label="I4", linestyle="None"),
     Line2D([0], [0], marker=markers["LDM"], color=colors["LDM"], markersize=10, label="LDM", linestyle="None"),
     Line2D([0], [0], marker=markers["WS4"], color=colors["WS4"], markersize=10, label="WS4", linestyle="None"),
 ]
@@ -146,8 +147,8 @@ z_range = range(110, 118)
 nuclei_to_evaluate = [(n_value, z_value) for z_value in z_range]
 
 models_config = [
-    {"name": "CNN-I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
-    {"name": "CNN-I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
+    {"name": "I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
+    {"name": "I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
 ]
 
 av = config['LDM']['av']
@@ -202,8 +203,8 @@ results_df['In 2020?'] = results_df.apply(lambda row: (row['N'], row['Z']) in ne
 output_csv_file = "Tests new nuclei/predictions_nuclei.csv"
 results_df.to_csv(output_csv_file, sep=";", index=False)
 
-colors = {"CNN-I3": "blue", "CNN-I4": "red", "LDM": "green", "WS4": "purple"}
-markers = {"CNN-I3": "o", "CNN-I4": "^", "LDM": "s", "WS4": "v"}
+colors = {"I3": "blue", "I4": "red", "LDM": "green", "WS4": "purple"}
+markers = {"I3": "o", "I4": "^", "LDM": "s", "WS4": "v"}
 plt.figure(figsize=(10, 6))
 legend_labels = set()
 
@@ -212,7 +213,7 @@ y_max = np.ceil((results_df["Difference (MeV)"] * (-1)).max())
 tick_interval = 2
 y_ticks = np.arange(y_min, y_max + tick_interval, tick_interval)
 
-for model_name in ["CNN-I3", "CNN-I4", "LDM", "WS4"]:
+for model_name in ["I3", "I4", "LDM", "WS4"]:
     model_data = results_df[results_df["Model"] == model_name]
 
     filled_points = model_data[~model_data["Z"].isin([110, 111, 112])]
@@ -231,10 +232,11 @@ plt.ylabel(r'$\Delta$ (MeV)')
 plt.xticks(ticks=range(110, 118, 1))
 plt.ylim(y_min-0.5, y_max+0.5)
 plt.yticks(ticks=y_ticks)
+plt.title('N=174 isotonic chain')
 plt.grid()
 legend_elements = [
-    Line2D([0], [0], marker=markers["CNN-I3"], color=colors["CNN-I3"], markersize=10, label="CNN-I3", linestyle="None"),
-    Line2D([0], [0], marker=markers["CNN-I4"], color=colors["CNN-I4"], markersize=10, label="CNN-I4", linestyle="None"),
+    Line2D([0], [0], marker=markers["I3"], color=colors["I3"], markersize=10, label="I3", linestyle="None"),
+    Line2D([0], [0], marker=markers["I4"], color=colors["I4"], markersize=10, label="I4", linestyle="None"),
     Line2D([0], [0], marker=markers["LDM"], color=colors["LDM"], markersize=10, label="LDM", linestyle="None"),
     Line2D([0], [0], marker=markers["WS4"], color=colors["WS4"], markersize=10, label="WS4", linestyle="None"),
 ]
@@ -246,7 +248,7 @@ plt.close()
 print('Succeeded in evaulating the N=174 isotonic chain.')
 
 
-# Evaluations of the CNN-I3 model on the whole dataset to evaluate 2020
+# Evaluations of the I3 model on the whole dataset to evaluate 2020
 model_path = model_path_i3
 model = CNN_I3().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
@@ -276,7 +278,7 @@ data['difference_i3'] = real_values - predictions
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2020.pdf"
-plot_differences_new(data, real_values, predictions, output_file, 'CNN-I3')
+plot_differences_new(data, real_values, predictions, output_file, 'I3')
 
 new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
 new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
@@ -289,11 +291,11 @@ rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.pdf"
-plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'CNN-I3')
-print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2020')
+plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'I3')
+print('Succeeded in evaluating I3 on the whole dataset to evaluate 2020')
 
 
-# Evaluations of the CNN-I4 on the whole dataset to evauluate 2020
+# Evaluations of the I4 on the whole dataset to evauluate 2020
 model_path = model_path_i4
 model = CNN_I4().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
@@ -323,7 +325,7 @@ data['difference_i4'] = real_values - predictions
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2020.pdf"
-plot_differences_new(data, real_values, predictions, output_file, 'CNN-I4')
+plot_differences_new(data, real_values, predictions, output_file, 'I4')
 
 new_nuclei_set = set(zip(new_nuclei['Z'], new_nuclei['N']))
 new_nuclei_indices = data.index[data.apply(lambda row: (row['Z'], row['N']) in new_nuclei_set, axis=1)]
@@ -336,11 +338,11 @@ rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
 
 output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.pdf"
-plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'CNN-I4')
-print('Succeeded in evaluating CNN-I4 on the whole dataset to evaluate 2020')
+plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'I4')
+print('Succeeded in evaluating I4 on the whole dataset to evaluate 2020')
 
 
-# Evaluations of the CNN-I3 model on the whole dataset to evaluate 2016
+# Evaluations of the I3 model on the whole dataset to evaluate 2016
 csv_file = "data/mass2016_cleaned_with_#.csv"
 data_feature = config['data']['data_feature'] 
 
@@ -375,11 +377,18 @@ data['difference_i3_antic'] = real_values_i3 - predictions_i3
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.pdf"
-plot_differences_new(data, real_values_i3, predictions_i3, output_file, 'CNN-I3')
-print('Succeeded in evaluating CNN-I3 on the whole dataset to evaluate 2016')
+plot_differences_new(data, real_values_i3, predictions_i3, output_file, 'I3')
+print('Succeeded in evaluating I3 on the whole dataset to evaluate 2016')
 
+data_z50 = data[data['Z'] == 50]
+real_values_i3_z50 = real_values_i3[data['Z'] == 50]
+predictions_i3_z50 = predictions_i3[data['Z'] == 50]
+diff_i3_z50 = real_values_i3_z50 - predictions_i3_z50
+diff_i3_z50 = diff_i3_z50[(diff_i3_z50 >= -1.5) & (diff_i3_z50 <= 1.5)]
+rmse_i3_z50 = np.sqrt(np.mean((diff_i3_z50) ** 2))
+print(f"RMSE for I3 (Z = 50): {rmse_i3_z50:.4f} MeV")
 
-# Evaluations of the CNN-I4 model on the whole dataset to evaluate 2016
+# Evaluations of the I4 model on the whole dataset to evaluate 2016
 file = "data/mass2016_cleaned_with_#.csv"
 df2016 = pd.read_csv(file, delimiter=';')
 
@@ -419,8 +428,15 @@ data['difference_i4_antic'] = real_values_i4 - predictions_i4
 data.to_csv(csv_file, index=False, sep=';')
 
 output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2016.pdf"
-plot_differences_new(data, real_values_i4, predictions_i4, output_file, 'CNN-I4')
-print('Succeeded in evaluating CNN-I4 on the whole dataset to evaluate 2016')
+plot_differences_new(data, real_values_i4, predictions_i4, output_file, 'I4')
+print('Succeeded in evaluating I4 on the whole dataset to evaluate 2016')
+
+real_values_i4_z50 = real_values_i4[data['Z'] == 50]
+predictions_i4_z50 = predictions_i4[data['Z'] == 50]
+diff_i4_z50 = real_values_i4_z50 - predictions_i4_z50
+diff_i4_z50 = diff_i4_z50[(diff_i4_z50 >= -1.5) & (diff_i4_z50 <= 1.5)]
+rmse_i4_z50 = np.sqrt(np.mean((diff_i4_z50) ** 2))
+print(f"RMSE for I4 (Z = 50): {rmse_i4_z50:.4f} MeV")
 
 
 output_file_combined = "Tests new nuclei/combined_differences_plot_all_nuclei_2016.pdf"
