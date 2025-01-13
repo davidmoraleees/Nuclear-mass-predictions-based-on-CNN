@@ -107,6 +107,14 @@ y_ticks = np.arange(y_min, y_max + tick_interval, tick_interval)
 for model_name in ["I3", "I4", "LDM", "WS4"]:
     model_data = results_df[results_df["Model"] == model_name]
 
+    print(f"\nDifferences for {model_name}:")
+    print(model_data[["N", "Z", "Difference (MeV)"]].to_string(index=False))
+
+    differences = model_data["Difference (MeV)"].values
+    rmse = np.sqrt(np.mean(differences**2))
+    
+    print(f"RMSE for {model_name}: {rmse:.4f} MeV")
+
     filled_points = model_data[~model_data["N"].isin([171, 172, 173])]
     plt.scatter(filled_points["N"], filled_points["Difference (MeV)"] * (-1), marker=markers[model_name], label=f"{model_name} (Training)" if f"{model_name} (Training)" not in legend_labels else None, color=colors[model_name], s=point_size, zorder=3)
     legend_labels.add(f"{model_name} (Training)")
@@ -380,7 +388,6 @@ output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.pdf"
 plot_differences_new(data, real_values_i3, predictions_i3, output_file, 'I3')
 print('Succeeded in evaluating I3 on the whole dataset to evaluate 2016')
 
-data_z50 = data[data['Z'] == 50]
 real_values_i3_z50 = real_values_i3[data['Z'] == 50]
 predictions_i3_z50 = predictions_i3[data['Z'] == 50]
 diff_i3_z50 = real_values_i3_z50 - predictions_i3_z50
