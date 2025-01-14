@@ -1,7 +1,0 @@
-Model trained: CNN-I3
-Execution started at: 2024-12-15 13:10:05
-Best train RMSE: 3.7720 MeV, Best train epoch: 300
-Best test RMSE: 3.3890 MeV, Best test epoch: 300
-Execution ended at: 2024-12-15 13:10:13
-
-

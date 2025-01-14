@@ -13,8 +13,8 @@ with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 fontsizes(config)
-model_path_i3 = "Tests new nuclei/cnn_i3_best_model_5e-05_prova.pt"  
-model_path_i4 = "Tests new nuclei/cnn_i4_best_model_5e-05_prova.pt"  
+model_path_i3 = "Results backup/cnn_i3_best_model_5e-05_prova.pt"  
+model_path_i4 = "Results backup/cnn_i4_best_model_5e-05_prova.pt"  
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 csv_file = "data/mass2020_cleaned_with_#.csv"
@@ -32,8 +32,8 @@ n_range = range(156, 174)
 nuclei_to_evaluate = [(n_value, z_value) for n_value in n_range]
 
 models_config = [
-    {"name": "I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
-    {"name": "I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
+    {"name": "I3", "model_path": "Results backup/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
+    {"name": "I4", "model_path": "Results backup/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
 ]
 
 av = config['LDM']['av']
@@ -155,8 +155,8 @@ z_range = range(110, 118)
 nuclei_to_evaluate = [(n_value, z_value) for z_value in z_range]
 
 models_config = [
-    {"name": "I3", "model_path": "Tests new nuclei/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
-    {"name": "I4", "model_path": "Tests new nuclei/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
+    {"name": "I3", "model_path": "Results backup/cnn_i3_best_model_1e-05.pt", "model_class": CNN_I3, "neighborhood_func": create_5x5_neighborhood_i3},
+    {"name": "I4", "model_path": "Results backup/cnn_i4_best_model_1e-05.pt", "model_class": CNN_I4, "neighborhood_func": create_5x5_neighborhood_i4}
 ]
 
 av = config['LDM']['av']
