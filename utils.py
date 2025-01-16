@@ -259,10 +259,17 @@ def plot_differences_new(data, real_values, predictions, file_name, title_name=N
         plt.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
     plt.xticks(magic_numbers)
     plt.yticks(magic_numbers)
+
+    xtick_positions = magic_numbers
+    xtick_labels = [str(magic) for magic in magic_numbers]
+    xtick_labels[1] = "20 "
+    xtick_labels[2] = "  28"
+    plt.gca().set_xticks(xtick_positions)
+    plt.gca().set_xticklabels(xtick_labels)
+
     plt.xlabel('N')
     plt.ylabel('Z')
     plt.title(title_name)
-    rmse = np.sqrt(np.mean(diff**2))
     plt.savefig(file_name, bbox_inches='tight')
     plt.close()
     return
@@ -305,8 +312,15 @@ def plot_differences_combined(data_i3, diff_i3, data_i4, diff_i4, data_ldm, diff
         for magic in magic_numbers:
             ax.axvline(x=magic, color='gray', linestyle='--', linewidth=0.5)
             ax.axhline(y=magic, color='gray', linestyle='--', linewidth=0.5)
-        ax.set_xticks(magic_numbers)
         ax.set_yticks(magic_numbers)
+
+        xtick_positions = magic_numbers
+        xtick_labels = [str(magic) for magic in magic_numbers]
+        xtick_labels[1] = "20 "
+        xtick_labels[2] = "  28"
+        ax.set_xticks(xtick_positions)
+        ax.set_xticklabels(xtick_labels)
+
         ax.grid(alpha=0.3)
 
     #cbar1 = fig.colorbar(scatter1, ax=axes[0], orientation='vertical', fraction=0.08)
@@ -465,6 +479,14 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
 
     plt.xticks(magic_numbers)
     plt.yticks(magic_numbers)
+
+    xtick_positions = magic_numbers
+    xtick_labels = [str(magic) for magic in magic_numbers]
+    xtick_labels[1] = "20 "
+    xtick_labels[2] = "  28"
+    plt.gca().set_xticks(xtick_positions)
+    plt.gca().set_xticklabels(xtick_labels)
+
     plt.xlabel('N')
     plt.ylabel('Z')
     plt.title(title_name) 

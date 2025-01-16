@@ -250,6 +250,14 @@ def plot_shell_gaps(df, gap_col, type, filename, data_processing_plots, vmin, vm
 
     plt.xticks(magic_numbers)
     plt.yticks(magic_numbers)
+
+    xtick_positions = magic_numbers
+    xtick_labels = [str(magic) for magic in magic_numbers]
+    xtick_labels[1] = "20 "
+    xtick_labels[2] = "  28"
+    plt.gca().set_xticks(xtick_positions)
+    plt.gca().set_xticklabels(xtick_labels)
+
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.xlabel('N')
