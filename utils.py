@@ -439,16 +439,19 @@ def train_model(model, train_inputs, train_targets, test_inputs, test_targets, n
 def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_epochs, num_epochs, lr, lr_folder, model_name):
         plt.figure(figsize=(10, 5))
         epochs_used = len(train_loss_rmse_values)
-        plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label='Training RMSE', color='blue', linewidth=0.5)
-        plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label='Test RMSE', color='red', linewidth=0.5)
+        plt.plot(range(plot_skipping_epochs, epochs_used + 1), train_loss_rmse_values[plot_skipping_epochs-1:], label=r'Training $\sigma$ (MeV)', color='blue', linewidth=0.5)
+        plt.plot(range(plot_skipping_epochs, epochs_used + 1), test_loss_rmse_values[plot_skipping_epochs-1:], label=r'Testing $\sigma$ (MeV)', color='red', linewidth=0.5)
         plt.xlabel('Epoch')
-        plt.ylabel('RMSE (MeV)')
+        plt.ylabel(r'$\sigma$ (MeV)')
         max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
         plt.xlim(plot_skipping_epochs, epochs_used + 1)
         plt.ylim(0, max_value) 
         plt.legend()
+        plt.tick_params(axis='x', pad=10)
+        plt.tick_params(axis='y', pad=10)
         plt.grid()
-        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.pdf'))
+        plt.tight_layout()
+        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.png'))
         plt.close()
         return
 
@@ -468,9 +471,13 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
     cbar.set_label(colorbar_label)
 
-    if filename == 'nuclear_mass_expteo_dif.pdf':
+    if filename == 'nuclear_mass_expteo_dif.png':
         cbar.set_ticks([vmin, vmin/2, vcenter, vmax/2, vmax])
         cbar.set_ticklabels([f"{vmin:.0f}", f"{vmin/2:.0f}", f"{vcenter:.0f}", f"{vmax/2:.0f}", f"{vmax:.0f}"])
+
+    if filename == 'bind_exp_per_nucleon.png':
+        cbar.set_ticks([vmin, vcenter, vmax])
+        cbar.set_ticklabels([f"{vmin:.0f}", f"{vcenter:.0f}", f"{vmax:.0f}"])
 
     magic_numbers = [8, 20, 28, 50, 82, 126]
     for magic in magic_numbers:
