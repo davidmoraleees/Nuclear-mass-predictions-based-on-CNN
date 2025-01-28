@@ -164,8 +164,8 @@ plot_data(df2016, 'bind_ene_teo', '(MeV)', 'bind_teo_per_nucleon.pdf',
           data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the experimental binding energy per nucleon as a function of Z and N
-plot_data(df2016, 'bind_ene', '(MeV)', 'bind_exp_per_nucleon.png',
-          data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max(), title_name='Experimental B/A (MeV)')
+plot_data(df2016, 'bind_ene', r'${B/A}$ (MeV)', 'bind_exp_per_nucleon.png',
+          data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max(), title_name=f'Experimental nuclear binding energy per nucleon')
 
 #Plot of the difference between theoretical and experimental binding energies per nucleon
 plot_data(df2016, 'Diff_bind_ene', '(MeV)', 'bind_teoexp_dif_per_nucleon.pdf',

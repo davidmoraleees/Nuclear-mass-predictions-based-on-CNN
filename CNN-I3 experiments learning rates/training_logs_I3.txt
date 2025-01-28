@@ -52,3 +52,75 @@ Best test RMSE: 3.3126 MeV, Best test epoch: 3000
 Execution ended at: 11:58:45 23/01/2025
 
 
+Execution started at: 2025-01-26 08:25:06
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 1e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 4.1946 MeV, Best train epoch: 3000
+Best test RMSE: 3.8871 MeV, Best test epoch: 3000
+Execution ended at: 08:26:25 26/01/2025
+
+
+Execution started at: 2025-01-26 08:26:29
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 5e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 6.1625 MeV, Best train epoch: 3000
+Best test RMSE: 5.8805 MeV, Best test epoch: 3000
+Execution ended at: 08:27:43 26/01/2025
+
+
+Execution started at: 2025-01-26 08:30:29
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 1e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 3.5046 MeV, Best train epoch: 3000
+Best test RMSE: 3.0696 MeV, Best test epoch: 3000
+Execution ended at: 08:31:50 26/01/2025
+
+
+Execution started at: 2025-01-26 08:31:53
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 5e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 3.2783 MeV, Best train epoch: 3000
+Best test RMSE: 2.8780 MeV, Best test epoch: 3000
+Execution ended at: 08:33:10 26/01/2025
+
+
+Execution started at: 2025-01-26 08:39:54
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 1e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 4.5384 MeV, Best train epoch: 3000
+Best test RMSE: 4.1830 MeV, Best test epoch: 3000
+Execution ended at: 08:41:14 26/01/2025
+
+
+Execution started at: 2025-01-26 08:41:17
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 5e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 3.9977 MeV, Best train epoch: 3000
+Best test RMSE: 3.6761 MeV, Best test epoch: 3000
+Execution ended at: 08:42:38 26/01/2025
+
+
+Execution started at: 2025-01-26 08:59:53
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 1e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 5.5387 MeV, Best train epoch: 3000
+Best test RMSE: 5.2903 MeV, Best test epoch: 3000
+Execution ended at: 09:01:13 26/01/2025
+
+
+Execution started at: 2025-01-26 09:01:16
+Model trained: CNN-I3
+Optimizer: Adamax, Learning rate: 5e-05
+Predefined number of epochs: 3000, Patience: 5000
+Best train RMSE: 3.3823 MeV, Best train epoch: 3000
+Best test RMSE: 3.0521 MeV, Best test epoch: 3000
+Execution ended at: 09:02:38 26/01/2025
+
+

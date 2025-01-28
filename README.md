@@ -1,21 +1,18 @@
 # Nuclear mass predictions based on convolutional neural networks
-This project is still in progress, so it's not finished yet.
-
-
 This repository contains code and data for predicting nuclear masses using convolutional neural networks (CNNs). The project involves data processing, model training, and evaluation of predictions. This project was developed by [David Morales](https://www.linkedin.com/in/david-morales-361b41282/) and supervised by [Arnau Rios](https://www.linkedin.com/in/arnau-rios-huguet/).
 
 
 ## Data
 
-The `Data` directory contains various datasets used for training and evaluation:
+The `Data` directory contains various datasets:
 - `WS4.txt`: Raw data file for WS4.
 - `WS4_cleaned.csv`: Cleaned data file for WS4.
-- `df2016_2020_nono.csv`: Merged data for 2016 and 2020 without hashtags.
-- `df2016_2020_yesyes.csv`: Merged data for 2016 and 2020 with hashtags.
-- `mass2016.txt`: Raw data file for 2016.
-- `mass2016_cleaned_without_#.csv`: Cleaned data file for 2016 without hashtags.
-- `mass2020.txt`: Raw data file for 2020.
-- `mass2020_cleaned_without_#.csv`: Cleaned data file for 2020 without hashtags.
+- `df2016_2020_nono.csv`: Merged data for AME2016 and AME2020 without hashtags.
+- `df2016_2020_yesyes.csv`: Merged data for AME2016 and AME2020 with hashtags.
+- `mass2016.txt`: Raw data file for AME2016.
+- `mass2016_cleaned_without_#.csv`: Cleaned data file for AME2016 without hashtags.
+- `mass2020.txt`: Raw data file for AME2020.
+- `mass2020_cleaned_without_#.csv`: Cleaned data file for AME2020 without hashtags.
 
 ## Scripts
 
@@ -23,15 +20,15 @@ The `Data` directory contains various datasets used for training and evaluation:
 - `data_processing.py`: Contains functions for processing raw data files, cleaning data, and merging datasets.
 
 ### Model Training and Evaluation
-- `CNN-I3.py`: Script for training and evaluating the CNN-I3 model.
-- `CNN-I4.py`: Script for training and evaluating the CNN-I4 model.
-- `new_nuclei_testing.py`: Script for testing the models on new nuclei data.
+- `CNN-I3.py`: Script for training and evaluating the I3 model.
+- `CNN-I4.py`: Script for training and evaluating the I4 model.
+- `new_nuclei_testing.py`: Script for testing the models on new nuclei data (AME2020).
 
 ### Utilities
 - `utils.py`: Contains utility functions for data processing, plotting, and model evaluation.
-- `multiple_scripts.py`: Script to execute multiple model scripts sequentially.
+- `multiple_scripts.py`: Script to execute multiple model runnings sequentially.
 
-## Models
+### Models
 
 The `models.py` file contains the definitions of the convolutional neural network models used in this project:
 - `CNN_I3`: Model class for CNN-I3.
@@ -43,7 +40,7 @@ The `config.yaml` file contains configuration settings for the project, includin
 
 ## Usage
 
-## Installing requirements
+### Installing requirements
 In order to run the scripts of the repository, you should download the necessary packages by running:
 ```sh
 pip install -r requirements.txt
@@ -69,7 +66,7 @@ python new_nuclei_testing.py
 ```
 
 ### Results
-The results of the model training and evaluation are stored in the `CNN-I3 results` and `CNN-I4 results` results directories. These directories contain plots and metrics for the model performance.
+The results of the model training and evaluation are stored in the `CNN-I3 results` and `CNN-I4 results` results directories. These directories contain plots and metrics for their performance.
 
 
 ## Contributing

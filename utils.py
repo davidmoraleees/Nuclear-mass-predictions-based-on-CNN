@@ -445,7 +445,8 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         plt.ylabel(r'$\sigma$ (MeV)')
         max_value = max(max(train_loss_rmse_values[plot_skipping_epochs-1:]), max(test_loss_rmse_values[plot_skipping_epochs-1:])) + 1
         plt.xlim(plot_skipping_epochs, epochs_used + 1)
-        plt.ylim(0, max_value) 
+        plt.ylim(0, max_value)
+        plt.title(r'Evolution of $\sigma$ for ' + f'{model_name}') 
         plt.legend()
         plt.tick_params(axis='x', pad=10)
         plt.tick_params(axis='y', pad=10)

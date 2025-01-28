@@ -127,6 +127,9 @@ for model_name in ["I3", "I4", "LDM", "WS4"]:
     # We multiply by (-1) because we are interested in nulear mass differences, not total binding energy differences.
 
 plt.axhline(0, color='black', linewidth=2.5, linestyle='-')
+plt.axvline(170.5, color='black', linestyle='--', linewidth=1.5, zorder=2)
+plt.text(168.3, y_max-9, "AME2016", horizontalalignment='center', verticalalignment='bottom', fontsize=24, color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+plt.text(172.7, y_max-9, "AME2020", horizontalalignment='center', verticalalignment='bottom', fontsize=24, color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
 plt.xlabel("N")
 plt.ylabel(r'$\Delta$ (MeV)')
 plt.xticks(ticks=range(156, 176, 2))
