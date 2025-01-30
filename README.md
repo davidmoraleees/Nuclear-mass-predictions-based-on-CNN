@@ -3,6 +3,10 @@ This repository contains code and data for predicting nuclear masses using convo
 
 The `TFG-David-Morales-DeLeón.pdf` file contains a detailed explanation of this project.
 
+The following image depicts the results obtained:
+
+![Image](Results%20backup/example_result.png)
+
 
 ## Data
 
