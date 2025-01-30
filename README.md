@@ -1,5 +1,7 @@
 # Nuclear mass predictions based on convolutional neural networks
-This repository contains code and data for predicting nuclear masses using convolutional neural networks (CNNs). The project involves data processing, model training, and evaluation of predictions. This project was developed by [David Morales](https://www.linkedin.com/in/david-morales-361b41282/) and supervised by [Arnau Rios](https://www.linkedin.com/in/arnau-rios-huguet/).
+This repository contains code and data for predicting nuclear masses using convolutional neural networks (CNNs). The project involves data processing, model training, and evaluation of predictions. This project has been developed by [David Morales](https://www.linkedin.com/in/david-morales-361b41282/).
+
+The `TFG-David-Morales-DeLeón.pdf` file contains a detailed explanation of this project.
 
 
 ## Data
@@ -67,10 +69,6 @@ python new_nuclei_testing.py
 
 ### Results
 The results of the model training and evaluation are stored in the `CNN-I3 results` and `CNN-I4 results` results directories. These directories contain plots and metrics for their performance.
-
-
-## Contributing
-Contributions are welcome! Please fork the repository and submit a pull request with your changes.
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.

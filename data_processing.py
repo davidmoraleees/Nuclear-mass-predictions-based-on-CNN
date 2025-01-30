@@ -164,7 +164,7 @@ plot_data(df2016, 'bind_ene_teo', '(MeV)', 'bind_teo_per_nucleon.pdf',
           data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max())
 
 #Plot of the experimental binding energy per nucleon as a function of Z and N
-plot_data(df2016, 'bind_ene', r'${B/A}$ (MeV)', 'bind_exp_per_nucleon.png',
+plot_data(df2016, 'bind_ene', r'${B/A}$ (MeV)', 'bind_exp_per_nucleon.pdf',
           data_processing_plots, cmap='jet', vmin=df2016['bind_ene_teo'].min(), vmax=df2016['bind_ene_teo'].max(), title_name=f'Experimental nuclear binding energy per nucleon')
 
 #Plot of the difference between theoretical and experimental binding energies per nucleon
@@ -201,7 +201,7 @@ plot_data(df2016, 'M_N_teo', '(MeV)',
 
 #Plot of the difference between nuclear mass calculated and the one from liquid-drop model                                       
 plot_data(df2016, 'Diff_nuclear_mass', r'$\Delta$ (MeV)',
-          'nuclear_mass_expteo_dif.png', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14, title_name='LDM')
+          'nuclear_mass_expteo_dif.pdf', data_processing_plots, cmap='seismic', vmin=-14, vcenter=0, vmax=14, title_name='LDM')
 
 #Plot of the difference between nuclear mass calculated and the one from WS4 model    
 plot_data(df2016, 'WS4_diff', r'$\Delta$ (MeV)',
@@ -279,9 +279,9 @@ max_value = max(df2016['delta_2n_exp'].max(), df2016['delta_2p_exp'].max(),
 xlim = (min(df2016['N'].min(), 0), max(df2016['N'].max() + 10, 0)) #Same limits for both plots
 ylim = (0, df2016['Z'].max() + 10)  
 
-plot_shell_gaps(df2016, 'delta_2n', 'exp', 'neutron_shell_gaps_exp.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2n', 'exp', 'neutron_shell_gaps_exp.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
-plot_shell_gaps(df2016, 'delta_2p', 'exp', 'proton_shell_gaps_exp.png', data_processing_plots,
+plot_shell_gaps(df2016, 'delta_2p', 'exp', 'proton_shell_gaps_exp.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)
 plot_shell_gaps(df2016, 'delta_2n', 'teo', 'neutron_shell_gaps_teo.pdf', data_processing_plots,
                 min_value, max_value, xlim=xlim, ylim=ylim)

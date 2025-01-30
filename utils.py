@@ -452,7 +452,7 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
         plt.tick_params(axis='y', pad=10)
         plt.grid()
         plt.tight_layout()
-        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.png'))
+        plt.savefig(os.path.join(lr_folder, f'CNN-{model_name}_evolution_lr_{lr}.pdf'))
         plt.close()
         return
 
@@ -472,11 +472,11 @@ def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, 
     cbar = plt.colorbar(scatter, orientation='horizontal', fraction=0.08, shrink=0.5)
     cbar.set_label(colorbar_label)
 
-    if filename == 'nuclear_mass_expteo_dif.png':
+    if filename == 'nuclear_mass_expteo_dif.pdf':
         cbar.set_ticks([vmin, vmin/2, vcenter, vmax/2, vmax])
         cbar.set_ticklabels([f"{vmin:.0f}", f"{vmin/2:.0f}", f"{vcenter:.0f}", f"{vmax/2:.0f}", f"{vmax:.0f}"])
 
-    if filename == 'bind_exp_per_nucleon.png':
+    if filename == 'bind_exp_per_nucleon.pdf':
         cbar.set_ticks([vmin, vcenter, vmax])
         cbar.set_ticklabels([f"{vmin:.0f}", f"{vcenter:.0f}", f"{vmax:.0f}"])
 

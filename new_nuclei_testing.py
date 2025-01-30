@@ -146,7 +146,7 @@ legend_elements = [
 ]
 plt.legend(handles=legend_elements, loc="upper left", handletextpad=0.01)
 plt.tight_layout()
-plt.savefig("Tests new nuclei/Mt_isotopic_chain.png",  bbox_inches='tight')
+plt.savefig("Tests new nuclei/Mt_isotopic_chain.pdf",  bbox_inches='tight')
 plt.close()
 
 print('Succeeded in evaulating the Mt isotopic chain.')
@@ -301,7 +301,7 @@ differences_new = real_values_new - predictions_new
 rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I3: {rmse_new_nuclei:.4f} MeV")
 
-output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.png"
+output_file = "Tests new nuclei/differences_plot_i3_new_nuclei_2020.pdf"
 plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'I3')
 print('Succeeded in evaluating I3 on the whole dataset to evaluate 2020')
 
@@ -348,7 +348,7 @@ differences_new = real_values_new - predictions_new
 rmse_new_nuclei = np.sqrt(np.mean((differences_new) ** 2))
 print(f"RMSE for new nuclei I4: {rmse_new_nuclei:.4f} MeV")
 
-output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.png"
+output_file = "Tests new nuclei/differences_plot_i4_new_nuclei_2020.pdf"
 plot_differences_new(new_nuclei, real_values_new, predictions_new, output_file, 'I4')
 print('Succeeded in evaluating I4 on the whole dataset to evaluate 2020')
 
@@ -387,7 +387,7 @@ data['prediction_i3_antic'] = predictions_i3
 data['difference_i3_antic'] = real_values_i3 - predictions_i3
 data.to_csv(csv_file, index=False, sep=';')
 
-output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.png"
+output_file = "Tests new nuclei/differences_plot_i3_all_nuclei_2016.pdf"
 plot_differences_new(data, real_values_i3, predictions_i3, output_file, 'I3')
 print('Succeeded in evaluating I3 on the whole dataset to evaluate 2016')
 
@@ -437,7 +437,7 @@ data['prediction_i4_antic'] = predictions_i4
 data['difference_i4_antic'] = real_values_i4 - predictions_i4
 data.to_csv(csv_file, index=False, sep=';')
 
-output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2016.png"
+output_file = "Tests new nuclei/differences_plot_i4_all_nuclei_2016.pdf"
 plot_differences_new(data, real_values_i4, predictions_i4, output_file, 'I4')
 print('Succeeded in evaluating I4 on the whole dataset to evaluate 2016')
 
