@@ -13,7 +13,6 @@ data:
   csv_file: 'data/mass2016_cleaned_with_#.csv'
   data_feature: 'bind_ene_total'
   test_size: 0.3
-  remove_hashtags: False
 
 training:
   optimizer_name: Adamax
@@ -24,6 +23,12 @@ training:
 
 general:
   random_state: 42
+  N_MIN: 8
+  N_MAX: 180
+  Z_MIN: 8
+  Z_MAX: 120
+  BE_C1: 14.4381
+  BE_C2: 1.55468e-6
 
 model:
   conv1:

@@ -458,6 +458,9 @@ def plot_evolution(train_loss_rmse_values, test_loss_rmse_values, plot_skipping_
 
 
 def plot_data(df, df_column, colorbar_label, filename, folder, cmap, vmin=None, vcenter=None, vmax=None, title_name=None):
+
+    os.makedirs(folder, exist_ok=True)
+    
     plt.figure(figsize=(10, 8))
 
     if vmin is None:
