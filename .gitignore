@@ -220,3 +220,13 @@ articles/
 notes/
 data_processing_plots/
 data_processed/
+tests_new_nuclei/
+results_backup/
+CNN-I3 experiments learning rates/
+CNN-I4 experiments learning rates/
+CNN-I3 results/
+CNN-I4 results/
+data/processed/
+.vscode/
+outputs_I3/
+outputs_I4/

@@ -11,9 +11,18 @@ dependencies = [
     "pandas (>=2.3.3,<3.0.0)",
     "matplotlib (>=3.10.8,<4.0.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
-    "torch (>=2.9.1,<3.0.0)"
+    "torch (>=2.9.1,<3.0.0)",
+    "scikit-learn (>=1.8.0,<2.0.0)"
 ]
 
+[tool.poetry]
+packages = [{ include = "src" }]
+
+[project.scripts]
+preprocess = "src.data.preprocessing:main"
+train = "src.training.main:main"
+evaluate = "src.evaluation.evaluate:main"
+iso_chains = "src.evaluation.iso_chains:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

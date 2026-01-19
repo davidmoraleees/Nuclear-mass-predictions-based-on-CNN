@@ -10,14 +10,15 @@ LDM:
   ap: 10.1744 # MeV
 
 data:
-  csv_file: 'data/mass2016_cleaned_with_#.csv'
+  csv_file: 'data/processed/mass2016_cleaned.csv'
   data_feature: 'bind_ene_total'
   test_size: 0.3
 
 training:
   optimizer_name: Adamax
-  num_epochs: 225000 # It has to be greater than plot_skipping_epochs
-  plot_skipping_epochs: 2000
+  num_epochs: 20 # It has to be greater than plot_skipping_epochs
+  plot_skipping_epochs: 10
+  images_format: png
   learning_rate: 0.002 # Default value
   patience: 50000
 
