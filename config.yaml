@@ -16,8 +16,8 @@ data:
 
 training:
   optimizer_name: Adamax
-  num_epochs: 20 # It has to be greater than plot_skipping_epochs
-  plot_skipping_epochs: 10
+  num_epochs: 225000 # It has to be greater than plot_skipping_epochs
+  plot_skipping_epochs: 2000
   images_format: png
   learning_rate: 0.002 # Default value
   patience: 50000
@@ -40,9 +40,6 @@ model:
     kernel_size: 3
     stride: 1
     padding: 1
-
-kfolding:
-  n_splits: 5
 
 fontsizes:
   font_size: 24

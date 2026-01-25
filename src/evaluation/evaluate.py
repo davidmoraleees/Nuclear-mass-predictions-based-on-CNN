@@ -1,7 +1,10 @@
-import os, argparse, torch, yaml, numpy as np, pandas as pd
+import os, argparse, torch, numpy as np, pandas as pd
 from src.models.cnn_i3 import CNN_I3
 from src.models.cnn_i4 import CNN_I4
-from src.utils.utils import create_5x5_neighborhood, plot_differences_new, plot_differences_combined, fontsizes
+from src.utils.style import fontsizes
+from src.utils.plotting import plot_differences_new, plot_differences_combined
+from src.utils.neighborhoods import create_5x5_neighborhood
+from src.utils.config import load_config
 
 
 def main():
@@ -11,21 +14,22 @@ def main():
     p.add_argument("--new_nuclei_file", default="data/processed/ame2020_new_nuclei.csv")
     p.add_argument("--data_2020_file", default="data/processed/mass2020_cleaned.csv")
     p.add_argument("--data_2016_file", default="data/processed/mass2016_cleaned.csv")
-    p.add_argument("--output_dir", default="tests_new_nuclei")
+    p.add_argument("--output_dir", default="tests_evaluation")
     a = p.parse_args()
 
     os.makedirs(a.output_dir, exist_ok=True)
-    with open("config.yaml") as f: cfg = yaml.safe_load(f)
+    cfg = load_config()
     fontsizes(cfg)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     feat, fmt = cfg["data"]["data_feature"], cfg["training"]["images_format"]
 
+
     new = pd.read_csv(a.new_nuclei_file, sep=";")
     new_set = set(zip(new.Z, new.N))
 
     def load_model(C, path):
-        m = C().to(device)
+        m = C(cfg).to(device)
         m.load_state_dict(torch.load(path, map_location=device, weights_only=True))
         m.eval()
         return m

@@ -230,3 +230,5 @@ data/processed/
 .vscode/
 outputs_I3/
 outputs_I4/
+tests_evaluation/
+tests_iso_chains/

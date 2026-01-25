@@ -1,8 +1,11 @@
-import os, argparse, torch, yaml, numpy as np, pandas as pd, matplotlib.pyplot as plt
+import os, argparse, torch, numpy as np, pandas as pd, matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from src.models.cnn_i3 import CNN_I3
 from src.models.cnn_i4 import CNN_I4
-from src.utils.utils import create_5x5_neighborhood, evaluate_single_nucleus, fontsizes
+from src.utils.style import fontsizes
+from src.utils.neighborhoods import create_5x5_neighborhood
+from src.utils.evaluation import evaluate_single_nucleus
+from src.utils.config import load_config
 
 
 def main():
@@ -11,12 +14,12 @@ def main():
     p.add_argument("--new-nuclei-file", default="data/processed/ame2020_new_nuclei.csv")
     p.add_argument("--i3-model", default="results_backup/cnn_i3_best_model_1e-05.pt")
     p.add_argument("--i4-model", default="results_backup/cnn_i4_best_model_1e-05.pt")
-    p.add_argument("--output-dir", default="tests_new_nuclei")
+    p.add_argument("--output-dir", default="tests_iso_chains")
     p.add_argument("--config", default="config.yaml")
     a = p.parse_args()
 
     os.makedirs(a.output_dir, exist_ok=True)
-    with open(a.config) as f: cfg = yaml.safe_load(f)
+    cfg = load_config()
     fontsizes(cfg)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,7 +55,7 @@ def main():
         res = []
 
         for m in models:
-            net = m["cls"]().to(device)
+            net = m["cls"](cfg).to(device)
             net.load_state_dict(torch.load(m["p"], map_location=device, weights_only=True))
             for N,Z in nuclei:
                 try:

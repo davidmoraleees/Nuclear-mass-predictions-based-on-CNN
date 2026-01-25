@@ -19,8 +19,8 @@ dependencies = [
 packages = [{ include = "src" }]
 
 [project.scripts]
-preprocess = "src.data.preprocessing:main"
-train = "src.training.main:main"
+preprocessing = "src.data.preprocessing:main"
+training = "src.training.main:main"
 evaluate = "src.evaluation.evaluate:main"
 iso_chains = "src.evaluation.iso_chains:main"
 

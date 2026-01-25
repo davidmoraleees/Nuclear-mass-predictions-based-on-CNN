@@ -1,9 +1,13 @@
-import os, argparse, yaml, torch, numpy as np, pandas as pd
+import os, argparse, torch, numpy as np, pandas as pd
 from sklearn.model_selection import train_test_split
 from src.models.cnn_i3 import CNN_I3
 from src.models.cnn_i4 import CNN_I4
-from src.utils.utils import create_5x5_neighborhood, plot_differences_nuclear_masses, plot_evolution, fontsizes
+from src.utils.style import fontsizes
+from src.utils.plotting import plot_differences_nuclear_masses, plot_evolution
+from src.utils.neighborhoods import create_5x5_neighborhood
 from src.training.loops import train_model
+from src.utils.config import load_config
+import random
 
 
 def main():
@@ -11,9 +15,17 @@ def main():
     p.add_argument("--model_type", choices=["I3", "I4"], required=True)
     p.add_argument("--outputs_folder", default=None)
     a = p.parse_args()
-
-    with open("config.yaml") as f: cfg = yaml.safe_load(f)
+    cfg = load_config()
     fontsizes(cfg)
+
+    seed = cfg["general"]["random_state"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     Model, extras, out = (
@@ -44,7 +56,7 @@ def main():
     )
 
     for lr in [1e-5, 5e-5]:
-        m = Model().to(device)
+        m = Model(cfg).to(device)
         tr, te, _, best, _ = train_model(
             m, device, Xtr, ytr, Xte, yte,
             cfg["training"]["num_epochs"], lr,
@@ -53,23 +65,21 @@ def main():
             a.model_type, lr,
         )
 
-        plot_evolution(tr, te, cfg["training"]["plot_skipping_epochs"],
-                       cfg["training"]["num_epochs"], lr, out, a.model_type)
+        plot_evolution(tr, te, cfg["training"]["plot_skipping_epochs"], lr, os.path.join(
+            out, f"CNN-{a.model_type}_evolution_lr_{lr}.{cfg['training']['images_format']}",
+        ), a.model_type)
 
         plot_differences_nuclear_masses(
-            data, X, y, range(len(data)), m, device,
+            data, cfg, X, y, range(len(data)), m, device,
             f"{out}/CNN-{a.model_type}_all_lr_{lr}.{cfg['training']['images_format']}",
-            best,
         )
         plot_differences_nuclear_masses(
-            data, Xtr, ytr, itr, m, device,
+            data, cfg, Xtr, ytr, itr, m, device,
             f"{out}/CNN-{a.model_type}_train_lr_{lr}.{cfg['training']['images_format']}",
-            best,
         )
         plot_differences_nuclear_masses(
-            data, Xte, yte, ite, m, device,
+            data, cfg, Xte, yte, ite, m, device,
             f"{out}/CNN-{a.model_type}_test_lr_{lr}.{cfg['training']['images_format']}",
-            best,
         )
 
 

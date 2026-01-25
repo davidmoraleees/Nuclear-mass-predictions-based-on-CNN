@@ -2,45 +2,9 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
-from sympy import plot
-import yaml
-from src.utils.utils import fontsizes, plot_data
-
-
-def load_constants(path="config.yaml"):
-    """Load YAML configuration and return both raw config and a computed constants dictionary."""
-    with open(path, "r") as f:
-        cfg = yaml.safe_load(f)
-
-    uma = cfg["LDM"]["uma"]
-    const = {
-        "uma": uma,
-        "m_n": cfg["LDM"]["m_n"] * 1e-6 * uma,
-        "m_H": cfg["LDM"]["m_H"] * 1e-6 * uma,
-        "m_e": cfg["LDM"]["m_e"],
-        "av": cfg["LDM"]["av"],
-        "aS": cfg["LDM"]["aS"],
-        "ac": cfg["LDM"]["ac"],
-        "aA": cfg["LDM"]["aA"],
-        "ap": cfg["LDM"]["ap"],
-        "N_MIN": cfg["general"]["N_MIN"],
-        "N_MAX": cfg["general"]["N_MAX"],
-        "Z_MIN": cfg["general"]["Z_MIN"],
-        "Z_MAX": cfg["general"]["Z_MAX"],
-        "BE_C1": cfg["general"]["BE_C1"],
-        "BE_C2": cfg["general"]["BE_C2"],
-    }
-    return cfg, const
-
-
-def in_region(N, Z, const):
-    """Return a boolean mask selecting nuclides inside the (N,Z) region bounds from config."""
-    return (N >= const["N_MIN"]) & (N < const["N_MAX"]) & (Z >= const["Z_MIN"]) & (Z < const["Z_MAX"])
-
-
-def b_e(Z, const):
-    """Compute electron binding energy correction b_e(Z) using the configured coefficients."""
-    return (const["BE_C1"] * (Z**2.39) + const["BE_C2"] * (Z**5.35)) * 1e-6
+from src.utils.style import fontsizes
+from src.utils.plotting import plot_data
+from src.utils.physics import load_constants, in_region, b_e
 
 
 def rmse_print(df, metrics):
@@ -189,9 +153,12 @@ def main():
         {"column": "WS4_diff", "label": "RMSE WS4 nuclear masses", "unit": "MeV"},
     ])
 
-    plot_data(df2016, "Diff_nuclear_mass", r"$\Delta$ (MeV)", f"nuclear_mass_expteo_dif.{images_format}", plots_folder,
+    plot_data(df=df2016, df_column="Diff_nuclear_mass", colorbar_label=r"$\Delta$ (MeV)",
+              output_path=os.path.join(plots_folder, f"nuclear_mass_expteo_dif.{images_format}"),
               cmap="seismic", vmin=-14, vcenter=0, vmax=14, title_name="LDM")
-    plot_data(df2016, "WS4_diff", r"$\Delta$ (MeV)", f"nuclear_mass_expws4_dif.{images_format}", plots_folder,
+
+    plot_data(df=df2016, df_column="WS4_diff", colorbar_label=r"$\Delta$ (MeV)",
+              output_path=os.path.join(plots_folder, f"nuclear_mass_expws4_dif.{images_format}"),
               cmap="seismic", title_name="WS4")
 
 

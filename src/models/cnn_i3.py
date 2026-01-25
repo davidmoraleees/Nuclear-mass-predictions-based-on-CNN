@@ -1,11 +1,7 @@
 import torch.nn as nn
-import yaml
-
-with open('config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
 
 class CNN_I3(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super(CNN_I3, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=config['model']['conv1']['kernel_size'],
                                stride=config['model']['conv1']['stride'], padding=config['model']['conv1']['padding'])
